@@ -1,6 +1,6 @@
 version: '3'
 
-# AI Agent MCP Server - Development Tasks
+# Setup Script - Development Tasks
 # Consolidated CLI interface for all development operations
 # See: /prompts/CLAUDE/CLAUDE-tooling.md for detailed documentation
 

@@ -12,6 +12,7 @@
 #   nu tests/integration/test_platform_compat.nu
 
 use std assert
+use test_helpers.nu *
 
 # Test 1: Verify OS detection identifies current platform correctly
 def test_os_detection_current_platform [] {
@@ -342,6 +343,8 @@ def main [] {
     print "║       Integration Tests: Platform Compatibility         ║"
     print "╚═══════════════════════════════════════════════════════════╝\n"
 
+    # Setup dummy files if needed
+    let pyproject_state = (setup_dummy_pyproject)
     # Detect current platform
     let uname_os = (^uname -s | str trim)
     print $"🖥️  Running on: ($uname_os)\n"
@@ -392,6 +395,8 @@ def main [] {
     print $"⏱️  Total test time: ($duration)"
     print $"🖥️  Tested on: ($uname_os)\n"
 
+    # Cleanup dummy files if we created them
+    cleanup_dummy_pyproject $pyproject_state
     # Exit with appropriate code
     if $failed > 0 {
         exit 1

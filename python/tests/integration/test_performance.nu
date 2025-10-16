@@ -13,6 +13,7 @@
 #   nu tests/integration/test_performance.nu --quick  # Skip full setup (faster)
 
 use std assert
+use test_helpers.nu *
 
 # Backup existing environment state
 def backup_environment [] {
@@ -289,6 +290,8 @@ def main [
     print "║        Integration Tests: Performance Benchmarks        ║"
     print "╚═══════════════════════════════════════════════════════════╝\n"
 
+    # Setup dummy files if needed
+    let pyproject_state = (setup_dummy_pyproject)
     let start_time = (date now)
 
     # Run tests sequentially
@@ -346,6 +349,8 @@ def main [
         print "   Run without --quick flag to test full setup duration\n"
     }
 
+    # Cleanup dummy files if we created them
+    cleanup_dummy_pyproject $pyproject_state
     # Exit with appropriate code
     if $failed > 0 {
         exit 1

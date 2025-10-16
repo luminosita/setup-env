@@ -29,7 +29,7 @@ use lib/common.nu *
 def display_welcome [silent: bool] {
     if not $silent {
         print "\n╔═══════════════════════════════════════════════════════════╗"
-        print "║   AI Agent MCP Server - Development Environment Setup    ║"
+        print "║   Development Environment Setup                           ║"
         print "╚═══════════════════════════════════════════════════════════╝\n"
     } else {
         print "🤖 Running setup in silent mode (CI/CD)"

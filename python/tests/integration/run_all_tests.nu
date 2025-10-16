@@ -121,8 +121,8 @@ def main [
     --suite: string      # Run specific suite only (flow, error, silent, perf, platform)
 ] {
     print "\n╔═══════════════════════════════════════════════════════════╗"
-    print "║         AI Agent MCP Server - Integration Tests         ║"
-    print "║                 Full Test Suite Runner                  ║"
+    print "║         Integration Tests                                 ║"
+    print "║                 Full Test Suite Runner                    ║"
     print "╚═══════════════════════════════════════════════════════════╝\n"
 
     # Detect platform

@@ -1,6 +1,6 @@
 # Integration Tests
 
-Comprehensive integration test suite for the AI Agent MCP Server setup script.
+Comprehensive integration test suite for the setup script.
 
 **Location:** `/scripts/tests/integration/`
 

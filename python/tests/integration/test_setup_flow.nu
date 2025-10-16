@@ -13,6 +13,10 @@
 #   nu tests/integration/test_setup_flow.nu --verbose
 
 use std assert
+use test_helpers.nu *
+
+# Global variable to track pyproject.toml state
+mut pyproject_state = {created: false, was_real: false}
 
 # Backup existing environment state
 def backup_environment [] {
@@ -321,6 +325,8 @@ def main [
     print "║     Integration Tests: Full Setup Flow (End-to-End)     ║"
     print "╚═══════════════════════════════════════════════════════════╝\n"
 
+    # Setup dummy files if needed
+    $env.pyproject_state = (setup_dummy_pyproject)
     let start_time = (date now)
 
     # Run tests sequentially
@@ -362,6 +368,8 @@ def main [
     print $"📊 Results: ($passed) passed, ($failed) failed"
     print $"⏱️  Total test time: ($duration)\n"
 
+    # Cleanup dummy files if we created them
+    cleanup_dummy_pyproject $env.pyproject_state
     # Exit with appropriate code
     if $failed > 0 {
         exit 1

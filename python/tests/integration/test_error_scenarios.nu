@@ -16,6 +16,7 @@
 #   nu tests/integration/test_error_scenarios.nu
 
 use std assert
+use test_helpers.nu *
 
 # Test 1: Verify prerequisites module reports correct structure
 def test_prerequisites_validation_structure [] {
@@ -189,6 +190,8 @@ def main [] {
     print "║         Integration Tests: Error Scenarios               ║"
     print "╚═══════════════════════════════════════════════════════════╝\n"
 
+    # Setup dummy files if needed (some tests check for .env.example existence)
+    let pyproject_state = (setup_dummy_pyproject)
     let start_time = (date now)
 
     # Run tests sequentially
@@ -234,6 +237,8 @@ def main [] {
     print $"📊 Results: ($passed) passed, ($failed) failed"
     print $"⏱️  Total test time: ($duration)\n"
 
+    # Cleanup dummy files if we created them
+    cleanup_dummy_pyproject $pyproject_state
     # Exit with appropriate code
     if $failed > 0 {
         exit 1

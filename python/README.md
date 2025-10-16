@@ -1,6 +1,6 @@
 # Scripts Directory
 
-This directory contains NuShell setup scripts and automation for the AI Agent MCP Server project.
+This directory contains NuShell setup scripts and automation for the project.
 
 ## Directory Structure
 
