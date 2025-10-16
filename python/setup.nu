@@ -88,7 +88,7 @@ def main [
     # Phase 0: Application Configuration (only if placeholders exist)
     let has_placeholders = (
         ("pyproject.toml" | path exists) and
-        (open pyproject.toml | get project.name? | default "" | str contains "CHANGE_ME")
+        (open pyproject.toml | get project.name? | default "" | str contains "change-me")
     )
 
     let app_config = if $has_placeholders {
