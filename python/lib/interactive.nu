@@ -137,53 +137,66 @@ export def transform_to_path_name [code_name: string] {
 export def get_app_configuration [silent: bool = false] {
     if $silent {
         return {
+            skip: true,
             app_name: "CHANGE_ME",
             app_code_name: "change-me",
             app_path_name: "change_me"
         }
     }
 
-    print "\n📝 Application Configuration\n"
+    let search_replace = (prompt_yes_no "Replace default application name in files and paths?" true)
 
-    # Prompt for application name
-    let app_name = (prompt_text
-        "Application Name (e.g., \"AI Agent MCP Server\")"
-        "My Application"
-        --validator {|x| if ($x | is-empty) {
-            {valid: false, error: "Application name cannot be empty"}
-        } else {
-            {valid: true, error: ""}
-        }}
-    )
+    if $search_replace {
+        print "\n📝 Application Configuration\n"
 
-    # Prompt for code name
-    let app_code_name = (prompt_text
-        "App Code Name (e.g., \"mcp_server\" or \"my-app\")"
-        "my_app"
-        --validator {|x|
-            if ($x | is-empty) {
-                {valid: false, error: "Code name cannot be empty"}
-            } else if ($x | str contains ' ') {
-                {valid: false, error: "Code name cannot contain spaces (use hyphens or underscores)"}
+        # Prompt for application name
+        let app_name = (prompt_text
+            "Application Name (e.g., \"AI Agent MCP Server\")"
+            "My Application"
+            --validator {|x| if ($x | is-empty) {
+                {valid: false, error: "Application name cannot be empty"}
             } else {
                 {valid: true, error: ""}
+            }}
+        )
+
+        # Prompt for code name
+        let app_code_name = (prompt_text
+            "App Code Name (e.g., \"mcp_server\" or \"my-app\")"
+            "my_app"
+            --validator {|x|
+                if ($x | is-empty) {
+                    {valid: false, error: "Code name cannot be empty"}
+                } else if ($x | str contains ' ') {
+                    {valid: false, error: "Code name cannot contain spaces (use hyphens or underscores)"}
+                } else {
+                    {valid: true, error: ""}
+                }
             }
+        )
+
+        # Transform to path name
+        let app_path_name = (transform_to_path_name $app_code_name)
+
+        print $"\n✅ Configuration:"
+        print $"  Application Name: ($app_name)"
+        print $"  App Code Name: ($app_code_name)"
+        print $"  App Path Name: ($app_path_name)"
+        print ""
+
+        return {
+            skip: false,
+            app_name: $app_name,
+            app_code_name: $app_code_name,
+            app_path_name: $app_path_name
         }
-    )
-
-    # Transform to path name
-    let app_path_name = (transform_to_path_name $app_code_name)
-
-    print $"\n✅ Configuration:"
-    print $"  Application Name: ($app_name)"
-    print $"  App Code Name: ($app_code_name)"
-    print $"  App Path Name: ($app_path_name)"
-    print ""
+    }
 
     return {
-        app_name: $app_name,
-        app_code_name: $app_code_name,
-        app_path_name: $app_path_name
+        skip: true,
+        app_name: "CHANGE_ME",
+        app_code_name: "change-me",
+        app_path_name: "change_me"
     }
 }
 

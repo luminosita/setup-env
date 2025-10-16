@@ -97,13 +97,15 @@ def main [
         print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
         let config = (get_app_configuration $silent)
-        let template_result = (apply_template_configuration $config)
+        if not $config.skip {
+            let template_result = (apply_template_configuration $config)
 
-        if not $template_result.success {
-            $errors = ($errors | append "Template configuration")
+            if not $template_result.success {
+                $errors = ($errors | append "Template configuration")
+            }
+
+            $config
         }
-
-        $config
     } else {
         # Use defaults if no placeholders
         {
