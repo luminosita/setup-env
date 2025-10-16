@@ -80,6 +80,113 @@ export def prompt_choice [
     }
 }
 
+# Prompt user for text input
+# Args:
+#   question: string - Question to ask
+#   default: string - Default answer
+#   --validator: closure - Optional validation closure that returns {valid: bool, error: string}
+# Returns: string - User's answer
+export def prompt_text [
+    question: string
+    default: string = ""
+    --validator: closure
+] {
+    loop {
+        let prompt_text = if ($default | is-empty) {
+            $"($question): "
+        } else {
+            $"($question) [($default)]: "
+        }
+
+        print -n $prompt_text
+        let answer = (input | str trim)
+
+        # If empty, use default
+        let value = if ($answer | is-empty) { $default } else { $answer }
+
+        # Validate if validator provided
+        if ($validator | is-not-empty) {
+            let validation_result = (do $validator $value)
+            if $validation_result.valid {
+                return $value
+            } else {
+                print $"❌ ($validation_result.error)"
+            }
+        } else {
+            return $value
+        }
+    }
+}
+
+# Transform code name to path name (lowercase, underscores only)
+# Args:
+#   code_name: string - Code name (e.g., "mcp_server" or "My Server")
+# Returns: string - Path name (e.g., "mcp_server" or "my_server")
+export def transform_to_path_name [code_name: string] {
+    $code_name
+    | str downcase
+    | str replace -a ' ' '_'
+    | str replace -a '-' '_'
+    | str replace -a -r '[^a-z0-9_]' ''
+}
+
+# Get application configuration from user
+# Args:
+#   silent: bool - If true, use defaults without prompting
+# Returns: record {app_name: string, app_code_name: string, app_path_name: string}
+export def get_app_configuration [silent: bool = false] {
+    if $silent {
+        return {
+            app_name: "CHANGE_ME",
+            app_code_name: "change-me",
+            app_path_name: "change_me"
+        }
+    }
+
+    print "\n📝 Application Configuration\n"
+
+    # Prompt for application name
+    let app_name = (prompt_text
+        "Application Name (e.g., \"AI Agent MCP Server\")"
+        "My Application"
+        --validator {|x| if ($x | is-empty) {
+            {valid: false, error: "Application name cannot be empty"}
+        } else {
+            {valid: true, error: ""}
+        }}
+    )
+
+    # Prompt for code name
+    let app_code_name = (prompt_text
+        "App Code Name (e.g., \"mcp_server\" or \"my-app\")"
+        "my_app"
+        --validator {|x|
+            if ($x | is-empty) {
+                {valid: false, error: "Code name cannot be empty"}
+            } else if ($x | str contains ' ') {
+                {valid: false, error: "Code name cannot contain spaces (use hyphens or underscores)"}
+            } else {
+                {valid: true, error: ""}
+            }
+        }
+    )
+
+    # Transform to path name
+    let app_path_name = (transform_to_path_name $app_code_name)
+
+    print $"\n✅ Configuration:"
+    print $"  Application Name: ($app_name)"
+    print $"  App Code Name: ($app_code_name)"
+    print $"  App Path Name: ($app_path_name)"
+    print ""
+
+    return {
+        app_name: $app_name,
+        app_code_name: $app_code_name,
+        app_path_name: $app_path_name
+    }
+}
+
 # Get setup preferences from user
 # Args:
 #   silent: bool - If true, use defaults without prompting

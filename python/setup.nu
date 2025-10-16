@@ -23,6 +23,7 @@ use lib/deps_install.nu *
 use lib/config_setup.nu *
 use lib/validation.nu *
 use lib/interactive.nu *
+use lib/template_config.nu *
 use lib/common.nu *
 
 # Display welcome banner
@@ -83,6 +84,34 @@ def main [
 
     # Track errors
     mut errors = []
+
+    # Phase 0: Application Configuration (only if placeholders exist)
+    let has_placeholders = (
+        ("pyproject.toml" | path exists) and
+        (open pyproject.toml | get project.name? | default "" | str contains "CHANGE_ME")
+    )
+
+    let app_config = if $has_placeholders {
+        print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        print "Phase 0: Application Configuration"
+        print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+
+        let config = (get_app_configuration $silent)
+        let template_result = (apply_template_configuration $config)
+
+        if not $template_result.success {
+            $errors = ($errors | append "Template configuration")
+        }
+
+        $config
+    } else {
+        # Use defaults if no placeholders
+        {
+            app_name: "Application",
+            app_code_name: "app",
+            app_path_name: "app"
+        }
+    }
 
     # Get setup preferences (interactive or silent)
     let preferences = (get_setup_preferences $silent)

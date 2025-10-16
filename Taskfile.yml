@@ -32,7 +32,7 @@ tasks:
     desc: "Build standalone setup script"
     cmds:
       - mkdir -p dist
-      - nu python/build.nu --yes
+      - nu python/build.nu
     sources:
       - python/**/*.nu
     generates:
