@@ -37,8 +37,8 @@ def replace_in_file [
     replacements: record
 ] {
     try {
-        # Read file content
-        let content = (open $file_path)
+        # Read file content as raw text
+        let content = (open --raw $file_path | decode utf-8)
 
         # Check if file contains any placeholders
         let has_change_me = ($content | str contains "CHANGE_ME")

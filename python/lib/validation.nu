@@ -126,31 +126,46 @@ def validate_dependencies [venv_path: string = ".venv"] {
 
     let python_bin = (common get_python_bin_path $venv_path)
 
-    # Check if this is a test/dummy project by looking for project name in pyproject.toml
-    let is_test_project = (
-        ("pyproject.toml" | path exists) and
-        ((open pyproject.toml | get project.name? | default "") == "test-project")
-    )
-
-    # Skip validation for test projects (they don't have mcp_server module)
-    if $is_test_project {
+    # Check if .env.example exists
+    if not (".env.example" | path exists) {
         return {
             name: $check_name,
             passed: true,
-            message: "Skipped (test project)",
+            message: "Skipped (no .env.example)",
             error: ""
         }
     }
 
-    # Try to import mcp_server package (assumes python binary exists)
-    let import_cmd = "import mcp_server; print('OK')"
+    # Read APP_PATH_NAME from .env.example
+    let env_content = (open --raw .env.example | decode utf-8)
+    let app_path_lines = ($env_content | lines | where {|line| $line | str starts-with "APP_PATH_NAME="})
+
+    # Extract module name from APP_PATH_NAME=value
+    let module_name = if ($app_path_lines | is-empty) {
+        ""
+    } else {
+        $app_path_lines | first | str replace "APP_PATH_NAME=" "" | str trim
+    }
+
+    # Skip if module name is empty, is the placeholder, or is a test project
+    if ($module_name | is-empty) or ($module_name == "change_me") or ($module_name == "test_project") {
+        return {
+            name: $check_name,
+            passed: true,
+            message: "Skipped (module name not configured or test project)",
+            error: ""
+        }
+    }
+
+    # Try to import the project's package
+    let import_cmd = $"import ($module_name); print\('OK'\)"
     let result = (^$python_bin -c $import_cmd | complete)
 
     if (common command_succeeded $result) {
         return {
             name: $check_name,
             passed: true,
-            message: "All critical modules importable",
+            message: $"Module '($module_name)' importable",
             error: ""
         }
     } else {
@@ -158,7 +173,7 @@ def validate_dependencies [venv_path: string = ".venv"] {
             name: $check_name,
             passed: false,
             message: "",
-            error: $"Module import failed: ($result.stderr)"
+            error: $"Module '($module_name)' import failed: ($result.stderr)"
         }
     }
 }

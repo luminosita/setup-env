@@ -54,6 +54,9 @@ build-backend = "setuptools.build_meta"
     # Create dummy .env.example if needed
     if not $env_example_exists {
         let dummy_env_example = '# Example environment configuration for tests
+# Application
+APP_PATH_NAME=test_project
+
 # API Configuration
 API_HOST=localhost
 API_PORT=8000
