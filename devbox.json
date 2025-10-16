@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetpack-io/devbox/main/.schema/devbox.schema.json",
+  "packages": [
+    "python@3.11",
+    "nushell@latest",
+    "go-task@latest",
+    "uv@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo '================================'",
+      "echo 'Dev Environment' Setup Script",
+      "echo '================================'",
+      "echo ''",
+      "echo 'Python version:' $(python --version)",
+      "echo 'NuShell version:' $(nu --version)",
+      "echo 'Taskfile version:' $(task --version)",
+      "echo 'UV version:' $(uv --version)",
+      "echo ''",
+      "echo 'Quick start:'",
+      "echo '  1. Run setup: nu scripts/setup.nu'",
+      "echo '  2. View tasks: task --list'",
+      "echo '  3. Start dev server: task dev'",
+      "echo ''",
+      "# Add ~/.local/bin to PATH for user-installed binaries",
+      "export PATH=\"$HOME/.local/bin:$PATH\"",
+      "# Set Python to use UTF-8 encoding",
+      "export PYTHONIOENCODING=utf-8",
+      "# Create .local/bin if it doesn't exist",
+      "mkdir -p $HOME/.local/bin"
+    ]
+  },
+  "env": {
+    "DEVBOX_ENV": "development",
+    "PYTHONUNBUFFERED": "1"
+  }
+}

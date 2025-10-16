@@ -1,0 +1,44 @@
+version: '3'
+
+# AI Agent MCP Server - Development Tasks
+# Consolidated CLI interface for all development operations
+# See: /prompts/CLAUDE/CLAUDE-tooling.md for detailed documentation
+
+vars:
+
+tasks:
+  python:test:
+    desc: Run all Nushell setup script tests (unit + integration)
+    cmds:
+      - task: python:test:unit
+      - task: python:test:integration
+
+  python:test:unit:
+    desc: Run Nushell setup script unit tests
+    cmds:
+      - 'failed=0; for test in python/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
+
+  python:test:integration:
+    desc: Run Nushell integration tests for setup scripts
+    cmds:
+      - nu python/tests/integration/run_all_tests.nu
+
+  python:test:integration:quick:
+    desc: Run Nushell integration tests (quick mode - skip performance tests)
+    cmds:
+      - nu python/tests/integration/run_all_tests.nu --quick
+
+  python:build:
+    desc: "Build standalone setup script"
+    cmds:
+      - mkdir -p dist
+      - nu python/build.nu --yes
+    sources:
+      - python/**/*.nu
+    generates:
+      - dist/setup-python.nu
+
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
