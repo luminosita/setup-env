@@ -1,13 +1,13 @@
 # NuShell module for prerequisite validation with explicit exports (per SPEC-001 D1)
 #
-# This module validates the presence and versions of required tools (Python 3.11+, Podman, Git)
+# This module validates the presence and versions of required tools (Go 1.21+, Podman, Git)
 # within the Devbox environment, returning a structured report of validation results.
 #
 # NOTE: Checks ALL prerequisites before returning (complete report for better UX).
 # Setup script will fail-fast if errors exist (per SPEC-001 D4).
 #
 # Usage:
-#   use python/lib/prerequisites.nu check_prerequisites
+#   use go/lib/prerequisites.nu check_prerequisites
 #   let result = (check_prerequisites)
 #
 #   # Fail-fast integration
@@ -22,17 +22,17 @@ use common.nu *
 # Check if all prerequisites are available and meet version requirements
 # Returns structured record with validation results and errors
 #
-# Returns: record<python: bool, python_version: string, podman: bool, podman_version: string, git: bool, git_version: string, errors: list<string>>
+# Returns: record<go: bool, go_version: string, podman: bool, podman_version: string, git: bool, git_version: string, errors: list<string>>
 export def check_prerequisites [] {
     mut errors = []
 
-    # Check Python 3.11+
-    let python_check = (check_python)
-    let python_ok = $python_check.ok
-    let python_version = $python_check.version
+    # Check Go 1.21+
+    let go_check = (check_go)
+    let go_ok = $go_check.ok
+    let go_version = $go_check.version
 
-    if not $python_ok {
-        $errors = ($errors | append $python_check.error)
+    if not $go_ok {
+        $errors = ($errors | append $go_check.error)
     }
 
     # Check Podman
@@ -62,15 +62,6 @@ export def check_prerequisites [] {
         $errors = ($errors | append $task_check.error)
     }
 
-    # Check UV package manager
-    let uv_check = (check_uv)
-    let uv_ok = $uv_check.ok
-    let uv_version = $uv_check.version
-
-    if not $uv_ok {
-        $errors = ($errors | append $uv_check.error)
-    }
-
     # Check pre-commit
     let precommit_check = (check_precommit)
     let precommit_ok = $precommit_check.ok
@@ -81,43 +72,41 @@ export def check_prerequisites [] {
     }
 
     return {
-        python: $python_ok,
-        python_version: $python_version,
+        go: $go_ok,
+        go_version: $go_version,
         podman: $podman_ok,
         podman_version: $podman_version,
         git: $git_ok,
         git_version: $git_version,
         task: $task_ok,
         task_version: $task_version,
-        uv: $uv_ok,
-        uv_version: $uv_version,
         precommit: $precommit_ok,
         precommit_version: $precommit_version,
         errors: $errors
     }
 }
 
-# Check Python version (3.11+)
+# Check Go version (1.21+)
 # Helper function (not exported - private to module)
 #
 # Returns: record<ok: bool, version: string, error: string>
-def check_python [] {
-    # Check if Python is available
-    let binary_check = (check_binary_exists "python")
+def check_go [] {
+    # Check if Go is available
+    let binary_check = (check_binary_exists "go")
 
     if not $binary_check.exists {
         return {
             installed: false,
             version: "",
-            error: "Python not found. Add 'python@3.11' to devbox.json packages."
+            error: "Go not found. Add 'go@latest' to devbox.json packages."
         }
     }
 
     # Get version
-    let version_result = (get_binary_version "python" "--version")
+    let version_result = (get_binary_version "go" "version")
 
     if $version_result.success {
-        print $"✅ Python installed: ($version_result.version)"
+        print $"✅ Go installed: ($version_result.version)"
         return {
             ok: true,
             version: $version_result.version,
@@ -127,7 +116,7 @@ def check_python [] {
         return {
             ok: false,
             version: "",
-            error: $"Python found but version check failed: ($version_result.error)"
+            error: $"Go found but version check failed: ($version_result.error)"
         }
     }
 }
@@ -229,37 +218,6 @@ def check_taskfile [] {
             ok: false,
             version: "",
             error: $"Taskfile found but version check failed: ($version_result.error)"
-        }
-    }
-}
-
-def check_uv [] {
-    # Check if uv binary exists
-    let binary_check = (check_binary_exists "uv")
-
-    if not $binary_check.exists {
-        return {
-            ok: false,
-            version: "",
-            error: "UV package manager not found in PATH. Please add 'uv' to devbox.json"
-        }
-    }
-
-    # Get version
-    let version_result = (get_binary_version "uv" "--version")
-
-    if $version_result.success {
-        print $"✅ UV installed: ($version_result.version)"
-        return {
-            ok: true,
-            version: $version_result.version,
-            error: ""
-        }
-    } else {
-        return {
-            ok: false,
-            version: "",
-            error: $"UV found but version check failed: ($version_result.error)"
         }
     }
 }
