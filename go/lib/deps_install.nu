@@ -14,16 +14,15 @@ use ../../common/lib/common.nu *
 export def install_dependencies [local_env_path: string] {
     print "📦 Installing Go dependencies..."
 
-    # Verify venv exists
+    # Verify local env exists
     let local_full_path = ($local_env_path | path expand)
-    let go_bin = (get_binary_path $local_full_path)
 
-    if not ($go_bin | path exists) {
+    if not ($local_full_path | path exists) {
         return {
             success: false,
             packages: 0,
             duration: 0sec,
-            error: $"Local Go environment not found at ($local_env_path). Run create_local_env first."
+            error: $"Local Go environment not found at ($local_env_path). Run create_venv first."
         }
     }
 
@@ -45,7 +44,7 @@ export def install_dependencies [local_env_path: string] {
     print $"📁 Installing to ($env.GOMODCACHE)"
 
     # Download dependencies
-    let download_result = (^$go_bin mod download | complete)
+    let download_result = (^go mod download | complete)
 
     if $download_result.exit_code != 0 {
         return {
@@ -57,7 +56,7 @@ export def install_dependencies [local_env_path: string] {
     }
 
     # Verify dependencies
-    let verify_result = (^$go_bin mod verify | complete)
+    let verify_result = (^go mod verify | complete)
 
     if $verify_result.exit_code != 0 {
         print "⚠️  Warning: go mod verify failed, but dependencies were downloaded"
@@ -68,7 +67,7 @@ export def install_dependencies [local_env_path: string] {
 
     # Get number of dependencies
     let deps_count = (
-        ^$go_bin list -m all
+        ^go list -m all
         | complete
         | get stdout
         | lines

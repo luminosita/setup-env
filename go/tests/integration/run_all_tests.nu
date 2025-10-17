@@ -1,46 +1,104 @@
 #!/usr/bin/env nu
 
-# Integration Test Runner for Go Setup
+# Integration Test Suite Runner for Go
 #
-# Runs all integration tests in sequence
-#
-# Usage:
-#   nu go/tests/integration/run_all_tests.nu
+# Runs all integration test suites and provides a comprehensive report
 
 def main [] {
     print "\n╔═══════════════════════════════════════════════════════════╗"
-    print "║   Go Setup Integration Test Suite                        ║"
+    print "║         Integration Tests - Go                            ║"
+    print "║                 Full Test Suite Runner                    ║"
+    print "╚═══════════════════════════════════════════════════════════╝"
+
+    print $"\n🖥️  Platform: ($nu.os-info.name) ($nu.os-info.arch)\n"
+
+    let suite_start = (date now)
+
+    # Test suites to run
+    let test_suites = [
+        {name: "Setup Flow (End-to-End)", file: "go/tests/integration/test_setup_flow.nu"}
+        {name: "Error Scenarios", file: "go/tests/integration/test_error_scenarios.nu"}
+        {name: "Silent Mode (CI/CD)", file: "go/tests/integration/test_silent_mode.nu"}
+        {name: "Performance Benchmarks", file: "go/tests/integration/test_performance.nu"}
+        {name: "Platform Compatibility", file: "go/tests/integration/test_platform_compat.nu"}
+    ]
+
+    mut results = []
+
+    print $"Running ($test_suites | length) test suite(s)...\n"
+
+    for suite in $test_suites {
+        print "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        print $"🧪 Running Test Suite: ($suite.name)"
+        print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+
+        let test_start = (date now)
+        let result = (^nu $suite.file | complete)
+        let test_end = (date now)
+        let duration = ($test_end - $test_start)
+
+        $results = ($results | append {
+            name: $suite.name,
+            exit_code: $result.exit_code,
+            duration: $duration,
+            stdout: $result.stdout,
+            stderr: $result.stderr
+        })
+    }
+
+    let suite_end = (date now)
+    let total_duration = ($suite_end - $suite_start)
+
+    # Display results summary
+    print "\n╔═══════════════════════════════════════════════════════════╗"
+    print "║           Integration Test Suite Results                ║"
     print "╚═══════════════════════════════════════════════════════════╝\n"
 
-    let start_time = (date now)
+    mut all_passed = true
 
-    mut tests = []
-    mut passed = 0
-    mut failed = 0
+    for result in $results {
+        let status = if $result.exit_code == 0 { "✅" } else { "❌" }
+        let duration_sec = ($result.duration | into int) / 1_000_000_000
 
-    # Test 1: Setup Flow
-    print "Running test_setup_flow.nu..."
-    let test1 = (^nu go/tests/integration/test_setup_flow.nu | complete)
-    if $test1.exit_code == 0 {
-        $passed = ($passed + 1)
-        print "✅ test_setup_flow.nu passed\n"
-    } else {
-        $failed = ($failed + 1)
-        print "❌ test_setup_flow.nu failed\n"
-        print $test1.stderr
+        print $"($status) ($result.name)"
+        print $"    Duration: ($duration_sec)s"
+
+        if $result.exit_code != 0 {
+            $all_passed = false
+            print $"    Exit code: ($result.exit_code)"
+
+            # Show last 20 lines of output for failed tests
+            let output_lines = ($result.stdout | lines)
+            let last_lines = if ($output_lines | length) > 20 {
+                $output_lines | last 20
+            } else {
+                $output_lines
+            }
+
+            print "    Test output (last 20 lines):"
+            for line in $last_lines {
+                print $"      ($line)"
+            }
+        }
+        print ""
     }
-    $tests = ($tests | append {name: "test_setup_flow.nu", passed: ($test1.exit_code == 0)})
 
-    # Summary
-    let end_time = (date now)
-    let duration = ($end_time - $start_time)
+    let passed_count = ($results | where exit_code == 0 | length)
+    let failed_count = ($results | where exit_code != 0 | length)
+    let total_duration_sec = ($total_duration | into int) / 1_000_000_000
 
-    print "╔═══════════════════════════════════════════════════════════╗"
-    print $"║   Test Results: ($passed) passed, ($failed) failed"
-    print "╚═══════════════════════════════════════════════════════════╝"
-    print $"\n⏱️  Total time: ($duration)\n"
+    print $"📊 Summary: ($passed_count)/($results | length) test suites passed"
+    if $failed_count > 0 {
+        print $"⚠️  ($failed_count) test suite(s) failed"
+    }
 
-    if $failed > 0 {
+    print $"\n⏱️  Total test suite time: ($total_duration_sec)s\n"
+
+    if $all_passed {
+        print "✅ All integration test suites passed!"
+        exit 0
+    } else {
+        print "❌ Test suite failed - see errors above"
         exit 1
     }
 }
