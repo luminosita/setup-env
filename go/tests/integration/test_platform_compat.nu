@@ -21,73 +21,97 @@ def main [] {
 
     # Test 1: OS detection works on current platform
     print "🧪 Test 1: OS detection works on current platform"
-    try {
-        let result = (^nu -c "use common/lib/os_detection.nu *; detect_os" | complete)
-        
+    let test1_result = (try {
+        let result = (^nu -c "use common/lib/os_detection.nu *; detect_os | to json" | complete)
+
         assert ($result.exit_code == 0) "OS detection failed"
-        
+
         let os_info = ($result.stdout | from json)
         assert ("os" in ($os_info | columns))
         assert ("arch" in ($os_info | columns))
-        
+
         print $"✅ OS detected: ($os_info.os) ($os_info.arch)\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {|e|
         print $"❌ Test failed: ($e.msg)\n"
+        {success: false}
+    })
+
+    if $test1_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 
     # Test 2: Architecture detection
     print "🧪 Test 2: Architecture detection"
-    try {
-        let result = (^nu -c "use common/lib/os_detection.nu *; detect_os" | complete)
+    let test2_result = (try {
+        let result = (^nu -c "use common/lib/os_detection.nu *; detect_os | to json" | complete)
         let os_info = ($result.stdout | from json)
-        
+
         assert ($os_info.arch in ["x86_64", "aarch64", "arm64"])
-        
+
         print $"✅ Architecture: ($os_info.arch)\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {
+        {success: false}
+    })
+
+    if $test2_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 
     # Test 3: Platform-specific paths
     print "🧪 Test 3: Platform-specific paths work"
-    try {
+    let test3_result = (try {
         # Go env paths should work on all platforms
-        assert (".go" | path type) == "dir" or (not (".go" | path exists))
-        
+        assert (((".go" | path type) == "dir") or (not (".go" | path exists)))
+
         print "✅ Platform paths work\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {
+        {success: false}
+    })
+
+    if $test3_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 
     # Test 4: Full setup on current platform
     print "🧪 Test 4: Full setup works on current platform (end-to-end)"
     print "⏱️  This test runs complete setup...\n"
-    try {
+    let test4_result = (try {
         # Clean up first
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
-        
+
         print "🚀 Running: nu go/setup.nu --silent\n"
-        
+
         let result = (^nu go/setup.nu --silent | complete)
-        
-        if $result.exit_code == 0 {
-            print "✅ Full setup works on current platform\n"
-            $passed = ($passed + 1)
-        } else {
-            print $"⚠️  Setup failed on current platform: ($result.stderr)\n"
-            $failed = ($failed + 1)
-        }
-        
+
         # Clean up
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
+
+        if $result.exit_code == 0 {
+            print "✅ Full setup works on current platform\n"
+            {success: true}
+        } else {
+            print $"⚠️  Setup failed on current platform: ($result.stderr)\n"
+            {success: false}
+        }
     } catch {|e|
         print $"❌ Test failed: ($e.msg)\n"
+        {success: false}
+    })
+
+    if $test4_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 

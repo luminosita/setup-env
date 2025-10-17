@@ -125,9 +125,18 @@ def setup_env_file [] {
 # Returns: record {installed: bool, path: string}
 def check_precommit_installed [local_env_path: string] {
     let precommit_bin = (get_precommit_bin_path $local_env_path)
-    let installed = ($precommit_bin | path exists)
+    let installed_in_venv = ($precommit_bin | path exists)
 
-    return {installed: $installed, path: $precommit_bin}
+    # If not in venv, check system PATH (for Go projects, pre-commit is system-wide)
+    if not $installed_in_venv {
+        let system_check = (^which pre-commit | complete)
+        if $system_check.exit_code == 0 {
+            let system_path = ($system_check.stdout | str trim)
+            return {installed: true, path: $system_path}
+        }
+    }
+
+    return {installed: $installed_in_venv, path: $precommit_bin}
 }
 
 # Install pre-commit hooks

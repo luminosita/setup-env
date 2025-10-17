@@ -21,65 +21,83 @@ def main [] {
 
     # Test 1: Silent mode runs without prompts
     print "🧪 Test 1: Silent mode completes without user interaction"
-    try {
+    let test1_result = (try {
         # Clean up
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
-        
+
         let result = (^nu go/setup.nu --silent | complete)
-        
+
         assert ($result.exit_code == 0) "Silent mode should succeed"
         assert ($result.stdout | str contains "silent mode")
-        
+
         # Clean up
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
-        
+
         print "✅ Silent mode works without prompts\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {|e|
         print $"❌ Test failed: ($e.msg)\n"
+        {success: false}
+    })
+
+    if $test1_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 
     # Test 2: Silent mode uses defaults
     print "🧪 Test 2: Silent mode uses default preferences"
-    try {
+    let test2_result = (try {
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
-        
+
         let result = (^nu go/setup.nu --silent | complete)
-        
+
         assert ($result.exit_code == 0)
-        
+
         # Clean up
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
-        
+
         print "✅ Default preferences applied\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {
+        {success: false}
+    })
+
+    if $test2_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 
     # Test 3: Exit codes are correct
     print "🧪 Test 3: Silent mode returns correct exit codes"
-    try {
+    let test3_result = (try {
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
-        
+
         let result = (^nu go/setup.nu --silent | complete)
-        
+
         # Success should be 0, failure should be 1
         assert (($result.exit_code == 0) or ($result.exit_code == 1))
-        
+
         # Clean up
         if (".go" | path exists) { rm -rf .go }
         if (".env" | path exists) { rm .env }
-        
+
         print "✅ Exit codes are correct\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {
+        {success: false}
+    })
+
+    if $test3_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 

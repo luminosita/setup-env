@@ -21,55 +21,67 @@ def main [] {
 
     # Test 1: OS detection is fast
     print "🧪 Test 1: OS detection performance (target: < 1 second)"
-    try {
+    let test1_result = (try {
         let iterations = 10
         let test_start = (date now)
-        
+
         for i in 1..$iterations {
             ^nu -c "use common/lib/os_detection.nu *; detect_os" | complete | ignore
         }
-        
+
         let test_end = (date now)
         let duration = ($test_end - $test_start)
         let avg = ($duration / $iterations)
-        
+
         print $"  ⏱️  ($iterations) iterations completed in: ($duration)"
         print $"    Average per call: ($avg)"
-        
+
         # Should be very fast (< 1s per call)
         assert (($avg | into int) < 1_000_000_000)
-        
+
         print "✅ OS detection is fast (< 1s per call)\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {
+        {success: false}
+    })
+
+    if $test1_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 
     # Test 2: Prerequisites check is reasonable
     print "🧪 Test 2: Prerequisites check performance (target: < 2 seconds)"
-    try {
+    let test2_result = (try {
         let iterations = 5
         print $"  Running prerequisites check ($iterations) times..."
-        
+
         let test_start = (date now)
-        
+
         for i in 1..$iterations {
             ^nu -c "use go/lib/prerequisites.nu *; check_prerequisites" | complete | ignore
         }
-        
+
         let test_end = (date now)
         let duration_ms = (($test_end - $test_start) | into int) / 1_000_000
         let avg_sec = ($duration_ms / $iterations / 1000)
-        
+
         print $"\n⏱️  ($iterations) prerequisites checks completed in: ($duration_ms)ms"
         print $"  Average per call: ($avg_sec)s"
-        
+
         # Should be reasonably fast
         assert ($avg_sec < 2)
-        
+
         print "✅ Prerequisites check is fast (< 2s per call)\n"
-        $passed = ($passed + 1)
+        {success: true}
     } catch {
+        {success: false}
+    })
+
+    if $test2_result.success {
+        $passed = ($passed + 1)
+    } else {
         $failed = ($failed + 1)
     }
 

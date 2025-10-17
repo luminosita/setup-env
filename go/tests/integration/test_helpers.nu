@@ -16,10 +16,14 @@ export def has_real_gomod [] {
 export def setup_dummy_gomod [] {
     let gomod_exists = ("go.mod" | path exists)
     let env_example_exists = (".env.example" | path exists)
+    let pre_commit_config_exists = (".pre-commit-config.yaml" | path exists)
     let pre_commit_exists = (".git/hooks/pre-commit" | path exists)
+    let git_exists = (".git" | path exists)
 
     mut created_gomod = false
     mut created_env_example = false
+    mut created_pre_commit_config = false
+    mut created_git = false
 
     # Create dummy go.mod if needed
     if not $gomod_exists {
@@ -59,13 +63,41 @@ DEBUG=false
         $created_env_example = true
     }
 
+    # Create dummy .pre-commit-config.yaml if needed
+    if not $pre_commit_config_exists {
+        let dummy_pre_commit_config = 'repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+'
+        $dummy_pre_commit_config | save ".pre-commit-config.yaml"
+        $created_pre_commit_config = true
+    }
+
+    # Create .git directory if needed
+    if not $git_exists {
+        mkdir .git
+        mkdir .git/hooks
+        $created_git = true
+    }
+
     if $created_gomod {
         print "📝 Created dummy go.mod for testing"
     }
     if $created_env_example {
         print "📝 Created dummy .env.example for testing"
     }
-    if $created_gomod or $created_env_example {
+    if $created_pre_commit_config {
+        print "📝 Created dummy .pre-commit-config.yaml for testing"
+    }
+    if $created_git {
+        print "📝 Created dummy .git directory for testing"
+    }
+    if $created_gomod or $created_env_example or $created_pre_commit_config or $created_git {
         print ""
     }
 
@@ -74,6 +106,10 @@ DEBUG=false
         was_real_gomod: $gomod_exists,
         created_env_example: $created_env_example,
         was_real_env_example: $env_example_exists,
+        created_pre_commit_config: $created_pre_commit_config,
+        was_real_pre_commit_config: $pre_commit_config_exists,
+        created_git: $created_git,
+        was_real_git: $git_exists,
         was_real_pre_commit: $pre_commit_exists
     }
 }
@@ -100,6 +136,20 @@ export def cleanup_dummy_gomod [state: record] {
         }
     }
 
+    # Only remove if we created it (not a real .pre-commit-config.yaml file)
+    if $state.created_pre_commit_config and (not $state.was_real_pre_commit_config) {
+        if (".pre-commit-config.yaml" | path exists) {
+            rm .pre-commit-config.yaml
+        }
+    }
+
+    # Only remove if we created it (not a real .git directory)
+    if $state.created_git and (not $state.was_real_git) {
+        if (".git" | path exists) {
+            rm -rf .git
+        }
+    }
+
     # Only remove if we created it (not a real pre-commit file)
     if not $state.was_real_pre_commit {
         if (".git/hooks/pre-commit" | path exists) {
@@ -107,7 +157,7 @@ export def cleanup_dummy_gomod [state: record] {
         }
     }
 
-    if $state.created_gomod or $state.created_env_example {
+    if $state.created_gomod or $state.created_env_example or $state.created_pre_commit_config or $state.created_git {
         print "🧹 Cleaned up dummy test files\n"
     }
 }
