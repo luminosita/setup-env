@@ -87,21 +87,23 @@ def test_all_modules_exist [] {
 
     let modules = [
         "python/setup.nu"
-        "python/lib/os_detection.nu"
         "python/lib/prerequisites.nu"
         "python/lib/venv_setup.nu"
         "python/lib/deps_install.nu"
-        "python/lib/config_setup.nu"
         "python/lib/validation.nu"
-        "python/lib/interactive.nu"
-        "python/lib/common.nu"
+        "common/lib/os_detection.nu"
+        "common/lib/config_setup.nu"
+        "common/lib/interactive.nu"
+        "common/lib/common.nu"
+        "common/lib/prerequisites_base.nu"
+        "common/lib/template_config.nu"
     ]
 
     for module in $modules {
         assert ($module | path exists) $"Module not found: ($module)"
     }
 
-    print "✅ All required modules exist (9 modules)"
+    print "✅ All required modules exist (11 modules)"
 }
 
 # Test 2: Verify setup script can be parsed (basic syntax check)

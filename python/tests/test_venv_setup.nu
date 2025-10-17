@@ -22,7 +22,7 @@ def test_create_venv [] {
     print $"Result: ($result)"
     assert $result.success
     assert ($result.path | path exists)
-    assert (($result.python_version | str length) > 0)
+    assert (($result.main_bin_version | str length) > 0)
 
     # Clean up
     rm -rf $test_venv

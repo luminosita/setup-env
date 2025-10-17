@@ -11,7 +11,7 @@
 #   nu tests/test_template_config.nu
 
 use std assert
-use ../lib/interactive.nu *
+use ../../common/lib/interactive.nu *
 
 # Test: transform_to_path_name function
 def test_transform_to_path_name [] {

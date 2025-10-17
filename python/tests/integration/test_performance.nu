@@ -229,7 +229,7 @@ def test_os_detection_performance [] {
     let start_time = (date now)
 
     for i in 1..$iterations {
-        let result = (^nu -c "use python/lib/os_detection.nu *; detect_os" | complete)
+        let result = (^nu -c "use common/lib/os_detection.nu *; detect_os" | complete)
         assert ($result.exit_code == 0) $"OS detection failed on iteration ($i)"
     }
 

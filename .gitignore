@@ -11,6 +11,9 @@ env/
 uv*
 .uv/
 
+# Go
+.go/
+
 # IDE
 .vscode/
 .idea/

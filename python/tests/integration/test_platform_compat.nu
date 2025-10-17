@@ -18,7 +18,7 @@ use test_helpers.nu *
 def test_os_detection_current_platform [] {
     print "\n🧪 Test 1: OS detection identifies current platform"
 
-    let result = (^nu -c "use python/lib/os_detection.nu *; detect_os" | complete)
+    let result = (^nu -c "use common/lib/os_detection.nu *; detect_os" | complete)
 
     assert ($result.exit_code == 0) "OS detection failed"
 
@@ -64,7 +64,7 @@ def test_os_detection_current_platform [] {
 def test_architecture_detection [] {
     print "\n🧪 Test 2: Architecture detection"
 
-    let result = (^nu -c "use python/lib/os_detection.nu *; detect_os" | complete)
+    let result = (^nu -c "use common/lib/os_detection.nu *; detect_os" | complete)
 
     assert ($result.exit_code == 0) "OS detection failed"
 
@@ -86,7 +86,7 @@ def test_architecture_detection [] {
 def test_version_detection [] {
     print "\n🧪 Test 3: OS version detection"
 
-    let result = (^nu -c "use python/lib/os_detection.nu *; detect_os" | complete)
+    let result = (^nu -c "use common/lib/os_detection.nu *; detect_os" | complete)
 
     assert ($result.exit_code == 0) "OS detection failed"
 

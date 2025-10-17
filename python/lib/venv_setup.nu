@@ -8,50 +8,7 @@
 # - check_venv_exists: Check if virtual environment exists
 # - get_venv_python_version: Get Python version in virtual environment
 
-use common.nu *
-
-
-# Verify venv and get its Python version (extracted common logic)
-# Args:
-#   venv_path: string - Path to virtual environment
-#   action_msg: string - Message describing the action ("Using existing venv" or "Virtual environment created")
-# Returns: record {success: bool, path: string, python_version: string, error: string}
-def verify_venv_and_get_version [
-    venv_path: string
-    action_msg: string
-] {
-    let check = (check_venv_exists $venv_path)
-
-    if not $check.exists {
-        return {
-            success: false,
-            path: "",
-            python_version: "",
-            error: $"Virtual environment not found at ($venv_path)"
-        }
-    }
-
-    # Get Python version
-    let py_ver = (get_venv_python_version $check.path)
-
-    if $py_ver.success {
-        print $"✅ ($action_msg) with Python ($py_ver.version)"
-        return {
-            success: true,
-            path: $check.path,
-            python_version: $py_ver.version,
-            error: ""
-        }
-    } else {
-        print $"⚠️  Warning: ($action_msg) but Python version check failed"
-        return {
-            success: true,
-            path: $check.path,
-            python_version: "unknown",
-            error: ""
-        }
-    }
-}
+use ../../common/lib/common.nu *
 
 # Create Python virtual environment using uv
 # Args:
@@ -137,6 +94,48 @@ export def get_venv_python_version [venv_path: string = ".venv"] {
             success: false,
             version: "",
             error: $version_result.error
+        }
+    }
+}
+
+# Verify venv and get its Python version (extracted common logic)
+# Args:
+#   venv_path: string - Path to virtual environment
+#   action_msg: string - Message describing the action ("Using existing venv" or "Virtual environment created")
+# Returns: record {success: bool, path: string, python_version: string, error: string}
+def verify_venv_and_get_version [
+    venv_path: string
+    action_msg: string
+] {
+    let check = (check_venv_exists $venv_path)
+
+    if not $check.exists {
+        return {
+            success: false,
+            path: "",
+            python_version: "",
+            error: $"Virtual environment not found at ($venv_path)"
+        }
+    }
+
+    # Get Python version
+    let py_ver = (get_venv_python_version $check.path)
+
+    if $py_ver.success {
+        print $"✅ ($action_msg) with Python ($py_ver.version)"
+        return {
+            success: true,
+            path: $check.path,
+            main_bin_version: $py_ver.version,
+            error: ""
+        }
+    } else {
+        print $"⚠️  Warning: ($action_msg) but Python version check failed"
+        return {
+            success: true,
+            path: $check.path,
+            python_version: "unknown",
+            error: ""
         }
     }
 }

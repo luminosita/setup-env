@@ -46,6 +46,10 @@ dev = [
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["go*", "common*", "dist*", ".*", "tests*"]
 '
         $dummy_pyproject | save "pyproject.toml"
         $created_pyproject = true

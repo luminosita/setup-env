@@ -102,7 +102,7 @@ def test_error_messages_quality [] {
     print "\n🧪 Test 6: Error messages include helpful remediation"
 
     # Check common.nu for error messaging utilities
-    let common_content = (open python/lib/common.nu)
+    let common_content = (open common/lib/common.nu)
 
     # Verify error messages include devbox.json guidance
     assert (($common_content | str contains "devbox.json") or ($common_content | str contains "error")) "Error messages don't reference devbox.json"

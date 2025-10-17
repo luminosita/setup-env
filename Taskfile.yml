@@ -8,35 +8,73 @@ vars:
 
 tasks:
   python:test:
-    desc: Run all Nushell setup script tests (unit + integration)
+    desc: Run all Python setup script tests (unit + integration)
     cmds:
       - task: python:test:unit
       - task: python:test:integration
 
   python:test:unit:
-    desc: Run Nushell setup script unit tests
+    desc: Run Python setup script unit tests
     cmds:
       - 'failed=0; for test in python/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
 
   python:test:integration:
-    desc: Run Nushell integration tests for setup scripts
+    desc: Run Python integration tests for setup scripts
     cmds:
       - nu python/tests/integration/run_all_tests.nu
 
   python:test:integration:quick:
-    desc: Run Nushell integration tests (quick mode - skip performance tests)
+    desc: Run Python integration tests (quick mode - skip performance tests)
     cmds:
       - nu python/tests/integration/run_all_tests.nu --quick
 
   python:build:
-    desc: "Build standalone setup script"
+    desc: "Build standalone Python setup script"
     cmds:
       - mkdir -p dist
-      - nu python/build.nu
+      - nu build.nu python
     sources:
       - python/**/*.nu
     generates:
       - dist/setup-python.nu
+
+  go:test:
+    desc: Run all Go setup script tests (unit + integration)
+    cmds:
+      - task: go:test:unit
+      - task: go:test:integration
+
+  go:test:unit:
+    desc: Run Go setup script unit tests
+    cmds:
+      - 'failed=0; for test in go/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
+
+  go:test:integration:
+    desc: Run Go integration tests for setup scripts
+    cmds:
+      - nu go/tests/integration/run_all_tests.nu
+
+  go:build:
+    desc: "Build standalone Go setup script"
+    cmds:
+      - mkdir -p dist
+      - nu build.nu go
+    sources:
+      - go/**/*.nu
+    generates:
+      - dist/setup-go.nu
+
+  build:
+    desc: "Build all standalone setup scripts"
+    cmds:
+      - task: python:build
+      - task: go:build
+
+  test:
+    desc: Run all tests (Python + Go)
+    cmds:
+      - task: python:test
+      - task: go:test
 
   help:
     desc: Show available tasks

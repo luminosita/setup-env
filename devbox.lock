@@ -53,6 +53,54 @@
         }
       }
     },
+    "go@latest": {
+      "last_modified": "2025-10-07T08:41:47Z",
+      "resolved": "github:NixOS/nixpkgs/bce5fe2bb998488d8e7e7856315f90496723793c#go",
+      "source": "devbox-search",
+      "version": "1.25.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/mkdfnr1nkfj2kznxyag9pypbxp3wqqdv-go-1.25.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/mkdfnr1nkfj2kznxyag9pypbxp3wqqdv-go-1.25.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/0jzj8p7k9wkr4l17sgrlg3z5di27sggf-go-1.25.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/0jzj8p7k9wkr4l17sgrlg3z5di27sggf-go-1.25.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/q2xylk8h3kbfajhw2lpdmyzyyqgqx8fl-go-1.25.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/q2xylk8h3kbfajhw2lpdmyzyyqgqx8fl-go-1.25.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/f01qkydd3c2jqwi4w6hkddkf3blp16kw-go-1.25.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/f01qkydd3c2jqwi4w6hkddkf3blp16kw-go-1.25.1"
+        }
+      }
+    },
     "nushell@latest": {
       "last_modified": "2025-10-07T08:41:47Z",
       "resolved": "github:NixOS/nixpkgs/bce5fe2bb998488d8e7e7856315f90496723793c#nushell",
@@ -98,6 +146,70 @@
             }
           ],
           "store_path": "/nix/store/l681axlrvlh163y90jwyli5sfn556slb-nushell-0.106.1"
+        }
+      }
+    },
+    "pre-commit@latest": {
+      "last_modified": "2025-10-12T08:13:11Z",
+      "resolved": "github:NixOS/nixpkgs/832e3b6db48508ae436c2c7bfc0cf914eac6938e#pre-commit",
+      "source": "devbox-search",
+      "version": "4.3.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/p9cfqn0aqg8f5zdzzn84l1cqppwr8k67-pre-commit-4.3.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/q2dnkwwccbax91zsnp1ay8wkl9hwxizs-pre-commit-4.3.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/p9cfqn0aqg8f5zdzzn84l1cqppwr8k67-pre-commit-4.3.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/kcbh6rplj60dqgijlwqcl6w40jq6j79w-pre-commit-4.3.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/lq78vyqi69igksqsnhpgxyvglihjy2xs-pre-commit-4.3.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/kcbh6rplj60dqgijlwqcl6w40jq6j79w-pre-commit-4.3.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/dn3cnk6xs8ba6whsrrda59bysikxwmgj-pre-commit-4.3.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/5mnfr1gmsx7lv61ny0iaiybkcqnq9rbs-pre-commit-4.3.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/dn3cnk6xs8ba6whsrrda59bysikxwmgj-pre-commit-4.3.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6h8kg6idf3xds25i34c16xfb23zzdccw-pre-commit-4.3.0",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/d3kbk7h9jvdbxnckklvmjz1cqdgdidxb-pre-commit-4.3.0-dist"
+            }
+          ],
+          "store_path": "/nix/store/6h8kg6idf3xds25i34c16xfb23zzdccw-pre-commit-4.3.0"
         }
       }
     },

@@ -1,29 +1,22 @@
 #!/usr/bin/env nu
 
-# Automated Go Development Environment Setup Script
+# Go Development Environment Setup Script
 #
-# This script orchestrates the complete Go development environment setup process:
-# 1. OS detection
-# 2. Prerequisite validation (Go, Podman, Git)
-# 3. Taskfile installation
-# 4. Go modules initialization
-# 5. Dependency installation
-# 6. Configuration setup (.env, pre-commit hooks)
-# 7. Environment validation
+# This script uses the common setup base with Go-specific configuration
 #
 # Usage:
 #   ./setup.nu              # Interactive mode
 #   ./setup.nu --silent     # Silent mode (CI/CD)
 
-use lib/os_detection.nu *
+use ../common/lib/os_detection.nu *
 use lib/prerequisites.nu *
-use lib/go_setup.nu *
+use lib/venv_setup.nu *
 use lib/deps_install.nu *
-use lib/config_setup.nu *
+use ../common/lib/config_setup.nu *
 use lib/validation.nu *
-use lib/interactive.nu *
-use lib/template_config.nu *
-use lib/common.nu *
+use ../common/lib/interactive.nu *
+use ../common/lib/template_config.nu *
+use ../common/lib/common.nu *
 
 # Display welcome banner
 def display_welcome [silent: bool] {
@@ -147,26 +140,26 @@ def main [
 
     print "✅ All prerequisites validated\n"
 
-    # Phase 3: Go Modules Setup
+    # Phase 3: Virtual Environment Setup
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 3: Go Modules Setup"
+    print "Phase 3: Virtual Environment Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let go_result = (setup_go_modules)
+    let venv_result = (create_venv ".go" "")
 
-    if not $go_result.success {
-        print $"❌ Go modules setup failed: ($go_result.error)"
+    if not $venv_result.success {
+        print $"❌ Virtual environment creation failed: ($venv_result.error)"
         exit 1
     }
 
-    print $"✅ Go modules ready: Go ($go_result.go_version)\n"
+    print $"✅ Virtual environment ready: Go ($venv_result.main_bin_version)\n"
 
     # Phase 4: Dependency Installation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     print "Phase 4: Dependency Installation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let deps_result = (install_dependencies)
+    let deps_result = (install_dependencies ".go")
 
     if not $deps_result.success {
         print $"❌ Dependency installation failed: ($deps_result.error)"
@@ -180,11 +173,11 @@ def main [
     print "Phase 5: Configuration Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let config_result = (setup_configuration)
+    let config_result = (setup_configuration ".go")
 
     if not $config_result.success {
         for error in $config_result.errors {
-            $errors = ($errors | append error)
+            $errors = ($errors | append $error)
         }
         print $"⚠️  Configuration setup completed with ($config_result.errors | length) errors\n"
     } else {
@@ -196,7 +189,7 @@ def main [
     print "Phase 6: Environment Validation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let validation = (validate_environment)
+    let validation = (validate_environment ".go")
 
     if $validation.failed > 0 {
         $errors = ($errors | append $"($validation.failed) validation checks failed")

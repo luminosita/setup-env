@@ -8,13 +8,13 @@
 # - install_dependencies: Install Python dependencies from pyproject.toml
 # - sync_dependencies: Sync dependencies (uv sync command)
 
-use common.nu *
+use ../../common/lib/common.nu *
 
-# Install Python dependencies from pyproject.toml
+# Install dependencies
 # Args:
 #   venv_path: string - Path to virtual environment (default: .venv)
 # Returns: record {success: bool, packages: int, duration: duration, error: string}
-export def install_dependencies [venv_path: string = ".venv"] {
+export def install_dependencies [venv_path: string] {
     print "📦 Installing Python dependencies..."
 
     # Verify venv exists

@@ -4,7 +4,7 @@
 # for cross-platform setup script behavior.
 #
 # Usage:
-#   use python/lib/os_detection.nu detect_os
+#   use lib/os_detection.nu detect_os
 #   let os_info = (detect_os)
 #   print $os_info  # {os: "macos", arch: "arm64", version: "14.5"}
 

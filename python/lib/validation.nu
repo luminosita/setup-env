@@ -10,9 +10,9 @@
 # - validate_taskfile: Check Taskfile installation and functionality
 # - validate_dependencies: Test critical module imports
 
-use common.nu
+use ../../common/lib/common.nu
 
-# Run all validation checks
+# Validate the complete development environment
 # Args:
 #   venv_path: string - Path to virtual environment (default: .venv)
 # Returns: record {passed: int, failed: int, checks: list}

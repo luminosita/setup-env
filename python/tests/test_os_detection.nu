@@ -6,7 +6,7 @@
 #   nu python/tests/test_os_detection.nu
 
 use std assert
-use ../lib/os_detection.nu detect_os
+use ../../common/lib/os_detection.nu detect_os
 
 # Test that detect_os returns correct structure
 def test_detect_os_structure [] {

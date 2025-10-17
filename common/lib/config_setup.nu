@@ -1,4 +1,4 @@
-# Configuration Setup Module for Go
+# Configuration Setup Module
 #
 # This module handles environment configuration including .env file creation
 # and pre-commit hooks installation.
@@ -8,11 +8,13 @@
 # - install_precommit_hooks: Install pre-commit hooks
 # - setup_configuration: Complete configuration setup (env + hooks)
 
-use common.nu *
+use ../../common/lib/common.nu *
 
 # Complete configuration setup (env file + pre-commit hooks)
+# Args:
+#   local_env_path: string - Path to virtual environment (default: .venv)
 # Returns: record {success: bool, env_created: bool, hooks_installed: bool, errors: list}
-export def setup_configuration [] {
+export def setup_configuration [local_env_path: string] {
     print "\n⚙️  Setting up configuration...\n"
 
     mut errors = []
@@ -29,7 +31,7 @@ export def setup_configuration [] {
     }
 
     # Install pre-commit hooks
-    let hooks_result = (install_precommit_hooks)
+    let hooks_result = (install_precommit_hooks $local_env_path)
 
     if $hooks_result.success {
         $hooks_installed = $hooks_result.installed
@@ -118,28 +120,31 @@ def setup_env_file [] {
 }
 
 # Check if pre-commit is installed
+# Args:
+#   local_env_path: string - Path to virtual environment
 # Returns: record {installed: bool, path: string}
-def check_precommit_installed [] {
-    let precommit_check = (^which pre-commit | complete)
-    let installed = ($precommit_check.exit_code == 0)
-    let path = if $installed { $precommit_check.stdout | str trim } else { "" }
+def check_precommit_installed [local_env_path: string] {
+    let precommit_bin = (get_precommit_bin_path $local_env_path)
+    let installed = ($precommit_bin | path exists)
 
-    return {installed: $installed, path: $path}
+    return {installed: $installed, path: $precommit_bin}
 }
 
 # Install pre-commit hooks
+# Args:
+#   local_env_path: string - Path to virtual environment (default: .venv)
 # Returns: record {success: bool, installed: bool, error: string}
-def install_precommit_hooks [] {
+def install_precommit_hooks [local_env_path: string] {
     print "🪝 Installing pre-commit hooks..."
 
     # Check if pre-commit is installed
-    let check = (check_precommit_installed)
+    let check = (check_precommit_installed $local_env_path)
 
     if not $check.installed {
         return {
             success: false,
             installed: false,
-            error: "pre-commit not found in PATH. Install with 'brew install pre-commit' or add to devbox.json"
+            error: $"pre-commit not found at ($check.path). Install dependencies first."
         }
     }
 

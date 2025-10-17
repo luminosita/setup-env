@@ -1,28 +1,44 @@
 #!/usr/bin/env nu
 
-# Python Development Environment Setup Script
+# Automated Development Environment Setup Script (Base)
 #
-# This script uses the common setup base with Python-specific configuration
+# This script orchestrates the complete development environment setup process:
+# 1. OS detection
+# 2. Prerequisite validation
+# 3. Virtual environment creation
+# 4. Dependency installation
+# 5. Configuration setup (.env, pre-commit hooks)
+# 6. Environment validation
 #
 # Usage:
 #   ./setup.nu              # Interactive mode
 #   ./setup.nu --silent     # Silent mode (CI/CD)
 
-use ../common/lib/os_detection.nu *
+# Language-specific configuration
+# This record must be defined by the importing script
+# export const CONFIG = {
+#     lang_name: "Python",
+#     env_path: ".venv",
+#     version: "3.11",
+#     placeholder_file: "pyproject.toml",
+#     placeholder_check: 'get project.name? | default "" | str contains "change-me"'
+# }
+
+use lib/os_detection.nu *
 use lib/prerequisites.nu *
 use lib/venv_setup.nu *
 use lib/deps_install.nu *
-use ../common/lib/config_setup.nu *
+use lib/config_setup.nu *
 use lib/validation.nu *
-use ../common/lib/interactive.nu *
-use ../common/lib/template_config.nu *
-use ../common/lib/common.nu *
+use lib/interactive.nu *
+use lib/template_config.nu *
+use lib/common.nu *
 
 # Display welcome banner
-def display_welcome [silent: bool] {
+export def display_welcome [silent: bool, lang_name: string] {
     if not $silent {
         print "\n╔═══════════════════════════════════════════════════════════╗"
-        print "║   Python Development Environment Setup                   ║"
+        print $"║   ($lang_name) Development Environment Setup                           ║"
         print "╚═══════════════════════════════════════════════════════════╝\n"
     } else {
         print "🤖 Running setup in silent mode (CI/CD)"
@@ -30,7 +46,7 @@ def display_welcome [silent: bool] {
 }
 
 # Display completion summary
-def display_completion [duration: duration, errors: list] {
+export def display_completion [duration: duration, errors: list] {
     print "\n╔═══════════════════════════════════════════════════════════╗"
 
     if ($errors | length) == 0 {
@@ -53,34 +69,54 @@ def display_completion [duration: duration, errors: list] {
 }
 
 # Display next steps
-def display_next_steps [] {
+export def display_next_steps [has_venv: bool] {
     print "📚 Next Steps:\n"
-    print "  1. Activate virtual environment:"
-    print "     source .venv/bin/activate\n"
-    print "  2. Start development server:"
+
+    if $has_venv {
+        print "  1. Activate virtual environment:"
+        print "     source .venv/bin/activate\n"
+        print "  2. Start development server:"
+    } else {
+        print "  1. Start development server:"
+    }
+
     print "     task dev\n"
-    print "  3. Run tests:"
+
+    if $has_venv {
+        print "  3. Run tests:"
+    } else {
+        print "  2. Run tests:"
+    }
+
     print "     task test\n"
-    print "  4. View all available commands:"
+
+    if not $has_venv {
+        print "  3. Build the project:"
+        print "     task build\n"
+    }
+
+    let step = if $has_venv { "4" } else { "4" }
+    print $"  ($step). View all available commands:"
     print "     task --list\n"
 }
 
 # Main setup orchestrator
-def main [
+export def run_setup [
+    config: record
     --silent (-s)  # Run in silent mode (no prompts, use defaults)
 ] {
     let start_time = (date now)
 
     # Display welcome
-    display_welcome $silent
+    display_welcome $silent $config.lang_name
 
     # Track errors
     mut errors = []
 
     # Phase 0: Application Configuration (only if placeholders exist)
     let has_placeholders = (
-        ("pyproject.toml" | path exists) and
-        (open pyproject.toml | get project.name? | default "" | str contains "change-me")
+        ($config.placeholder_file | path exists) and
+        (do { open $config.placeholder_file | ($config.placeholder_check) } | complete | get stdout | str trim | into bool)
     )
 
     let app_config = if $has_placeholders {
@@ -145,21 +181,21 @@ def main [
     print "Phase 3: Virtual Environment Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let venv_result = (create_venv ".venv" "3.11")
+    let venv_result = (create_venv $config.env_path $config.version)
 
     if not $venv_result.success {
         print $"❌ Virtual environment creation failed: ($venv_result.error)"
         exit 1
     }
 
-    print $"✅ Virtual environment ready: Python ($venv_result.main_bin_version)\n"
+    print $"✅ Virtual environment ready: ($config.lang_name) ($venv_result.main_bin_version)\n"
 
     # Phase 4: Dependency Installation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     print "Phase 4: Dependency Installation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let deps_result = (install_dependencies ".venv")
+    let deps_result = (install_dependencies $config.env_path)
 
     if not $deps_result.success {
         print $"❌ Dependency installation failed: ($deps_result.error)"
@@ -173,7 +209,7 @@ def main [
     print "Phase 5: Configuration Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let config_result = (setup_configuration ".venv")
+    let config_result = (setup_configuration $config.env_path)
 
     if not $config_result.success {
         for error in $config_result.errors {
@@ -189,7 +225,7 @@ def main [
     print "Phase 6: Environment Validation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let validation = (validate_environment ".venv")
+    let validation = (validate_environment $config.env_path)
 
     if $validation.failed > 0 {
         $errors = ($errors | append $"($validation.failed) validation checks failed")
@@ -204,7 +240,7 @@ def main [
 
     # Display next steps
     if ($errors | length) == 0 {
-        display_next_steps
+        display_next_steps $config.has_venv
     }
 
     # Exit with appropriate code

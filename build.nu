@@ -3,7 +3,8 @@
 # Build standalone setup script by merging main script with required modules
 #
 # Usage:
-#   nu python/build.nu --yes    # Build without confirmation
+#   nu build.nu python --yes    # Build Python setup script
+#   nu build.nu go --yes        # Build Go setup script
 #
 # Features:
 # - Discovers modules recursively
@@ -31,9 +32,11 @@ def parse_use_statements [file_path: string] {
 # Args:
 #   main_script: string - Path to main script
 #   lib_dir: string - Directory containing modules
-# Returns: list<string> - Sorted list of unique module names
-def discover_required_modules [main_script: string, lib_dir: string] {
+#   common_lib_dir: string - Directory containing common modules
+# Returns: record {modules: list<string>, common_modules: list<string>}
+def discover_required_modules [main_script: string, lib_dir: string, common_lib_dir: string] {
     mut required = []
+    mut common_required = []
     mut to_process = (parse_use_statements $main_script)
 
     # Traverse dependency tree
@@ -42,22 +45,31 @@ def discover_required_modules [main_script: string, lib_dir: string] {
         $to_process = ($to_process | skip 1)
 
         # Skip if already processed
-        if $current in $required {
+        if ($current in $required) or ($current in $common_required) {
             continue
         }
 
-        # Add to required list
-        $required = ($required | append $current)
+        # Check if module is in common/lib first
+        let common_module_path = ($common_lib_dir | path join $"($current).nu")
+        let lib_module_path = ($lib_dir | path join $"($current).nu")
 
-        # Check if module file exists and parse its dependencies
-        let module_path = ($lib_dir | path join $"($current).nu")
-        if ($module_path | path exists) {
-            let deps = (parse_use_statements $module_path)
+        if ($common_module_path | path exists) {
+            # Module is in common/lib
+            $common_required = ($common_required | append $current)
+            let deps = (parse_use_statements $common_module_path)
+            $to_process = ($to_process | append $deps | uniq)
+        } else if ($lib_module_path | path exists) {
+            # Module is in base_dir/lib
+            $required = ($required | append $current)
+            let deps = (parse_use_statements $lib_module_path)
             $to_process = ($to_process | append $deps | uniq)
         }
     }
 
-    $required | sort
+    return {
+        modules: ($required | sort),
+        common_modules: ($common_required | sort)
+    }
 }
 
 # Transform use statements in content to use inline module names
@@ -84,22 +96,55 @@ def transform_use_statements [content: string] {
 }
 
 # Main entry point
-def main [--yes (-y)] {
-    let main_script = "python/setup.nu"
-    let lib_dir = "python/lib"
-    let output_file = "dist/setup.nu"
+def main [
+    base_dir: string = "python"  # Base directory (python or go)
+    --yes (-y)                    # Auto-confirm build
+] {
+    # Validate base_dir
+    if $base_dir not-in ["python", "go"] {
+        print $"❌ Error: base_dir must be 'python' or 'go', got '($base_dir)'"
+        exit 1
+    }
 
-    print "🔍 Analyzing module dependencies...\n"
+    let main_script = ($base_dir | path join "setup.nu")
+    let lib_dir = ($base_dir | path join "lib")
+    let common_lib_dir = "common/lib"
+    let output_file = ($"dist/setup-($base_dir).nu")
+
+    # Verify directories exist
+    if not ($main_script | path exists) {
+        print $"❌ Error: Main script not found: ($main_script)"
+        exit 1
+    }
+
+    if not ($lib_dir | path exists) {
+        print $"❌ Error: Lib directory not found: ($lib_dir)"
+        exit 1
+    }
+
+    if not ($common_lib_dir | path exists) {
+        print $"❌ Error: Common lib directory not found: ($common_lib_dir)"
+        exit 1
+    }
+
+    print $"🔍 Analyzing module dependencies for ($base_dir)...\n"
 
     # Discover required modules
-    let required_modules = discover_required_modules $main_script $lib_dir
+    let discovered = (discover_required_modules $main_script $lib_dir $common_lib_dir)
+    let required_modules = $discovered.modules
+    let common_modules = $discovered.common_modules
 
     # Display analysis
-    print $"📦 Found ($required_modules | length) required modules:"
+    print $"📦 Found ($required_modules | length) base modules + ($common_modules | length) common modules:"
     for module in $required_modules {
         let path = ($lib_dir | path join $"($module).nu")
         let size = (ls $path | get size | first)
-        print $"  • ($module) \(($size) bytes\)"
+        print $"  • ($module) \(($size) bytes\) [base]"
+    }
+    for module in $common_modules {
+        let path = ($common_lib_dir | path join $"($module).nu")
+        let size = (ls $path | get size | first)
+        print $"  • ($module) \(($size) bytes\) [common]"
     }
     print ""
 
@@ -108,7 +153,7 @@ def main [--yes (-y)] {
     let unused = ($all_modules | where $it not-in $required_modules)
 
     if ($unused | length) > 0 {
-        print $"ℹ️  Skipping ($unused | length) unused modules:"
+        print $"ℹ️  Skipping ($unused | length) unused base modules:"
         for module in $unused {
             print $"  • ($module)"
         }
@@ -118,7 +163,8 @@ def main [--yes (-y)] {
     # Display build plan
     print "📋 Build plan:"
     print $"  Main script: ($main_script)"
-    print $"  Modules: ($required_modules | str join ', ')"
+    print $"  Base modules: ($required_modules | str join ', ')"
+    print $"  Common modules: ($common_modules | str join ', ')"
     print $"  Output: ($output_file)"
     print ""
 
@@ -130,18 +176,31 @@ def main [--yes (-y)] {
 
     print "🔨 Building standalone script...\n"
 
-    # Build module definitions
-    let modules = $required_modules | each { |name|
-        let path = ($lib_dir | path join $"($name).nu")
-        print $"  Processing module: ($name)"
+    # Build common module definitions first
+    let common_module_defs = $common_modules | each { |name|
+        let path = ($common_lib_dir | path join $"($name).nu")
+        print $"  Processing common module: ($name)"
 
         let raw_content = open $path
         let content = transform_use_statements $raw_content
         $"module ($name) {\n($content)\n}\n"
     } | str join "\n"
 
+    # Build base module definitions
+    let base_module_defs = $required_modules | each { |name|
+        let path = ($lib_dir | path join $"($name).nu")
+        print $"  Processing base module: ($name)"
+
+        let raw_content = open $path
+        let content = transform_use_statements $raw_content
+        $"module ($name) {\n($content)\n}\n"
+    } | str join "\n"
+
+    # Combine all modules
+    let all_modules = ($common_modules | append $required_modules)
+
     # Generate use statements for all modules
-    let use_statements = $required_modules
+    let use_statements = $all_modules
         | each { |name| $"use ($name) *" }
         | str join "\n"
 
@@ -152,8 +211,8 @@ def main [--yes (-y)] {
         | where not ($it | str starts-with "use ")
         | str join "\n"
 
-    # Combine all parts
-    let standalone = $"#!/usr/bin/env nu\n\n($modules)\n($use_statements)\n\n($main)"
+    # Combine all parts (common modules first, then base modules)
+    let standalone = $"#!/usr/bin/env nu\n\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($main)"
 
     # Ensure output directory exists
     mkdir dist

@@ -2,9 +2,11 @@
   "$schema": "https://raw.githubusercontent.com/jetpack-io/devbox/main/.schema/devbox.schema.json",
   "packages": [
     "python@3.11",
+    "go@latest",
     "nushell@latest",
     "go-task@latest",
-    "uv@latest"
+    "uv@latest",
+    "pre-commit@latest"
   ],
   "shell": {
     "init_hook": [
@@ -13,14 +15,16 @@
       "echo '================================'",
       "echo ''",
       "echo 'Python version:' $(python --version)",
+      "echo 'Go version:' $(go version)",
       "echo 'NuShell version:' $(nu --version)",
       "echo 'Taskfile version:' $(task --version)",
       "echo 'UV version:' $(uv --version)",
       "echo ''",
       "echo 'Quick start:'",
-      "echo '  1. Run setup: nu scripts/setup.nu'",
-      "echo '  2. View tasks: task --list'",
-      "echo '  3. Start dev server: task dev'",
+      "echo '  1. Run Python setup: nu python/setup.nu'",
+      "echo '  2. Run Go setup: nu go/setup.nu'",
+      "echo '  3. View tasks: task --list'",
+      "echo '  4. Run tests: task test'",
       "echo ''",
       "# Add ~/.local/bin to PATH for user-installed binaries",
       "export PATH=\"$HOME/.local/bin:$PATH\"",

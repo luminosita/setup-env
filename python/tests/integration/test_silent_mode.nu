@@ -275,7 +275,7 @@ def test_interactive_module_silent_flag [] {
     print "\n🧪 Test 8: Interactive module respects silent flag"
 
     # Test the get_setup_preferences function directly
-    let result = (^nu -c "use python/lib/interactive.nu *; get_setup_preferences true" | complete)
+    let result = (^nu -c "use common/lib/interactive.nu *; get_setup_preferences true" | complete)
 
     assert ($result.exit_code == 0) "Interactive module failed in silent mode"
 

@@ -5,11 +5,13 @@
 # Public Functions:
 # - validate_environment: Run all validation checks
 
-use common.nu *
+use ../../common/lib/common.nu *
 
 # Validate the complete development environment
+# Args:
+#   local_env_path: string - Path to local Go environment (default: .go)
 # Returns: record {success: bool, passed: int, failed: int, checks: list}
-export def validate_environment [] {
+export def validate_environment [local_env_path: string = ".go"] {
     print "\n🔍 Validating environment...\n"
 
     mut checks = []
@@ -25,7 +27,16 @@ export def validate_environment [] {
         $failed = ($failed + 1)
     }
 
-    # Check 2: .env file
+    # Check 2: Local Go workspace
+    let go_workspace_check = (validate_go_workspace $local_env_path)
+    $checks = ($checks | append $go_workspace_check)
+    if $go_workspace_check.passed {
+        $passed = ($passed + 1)
+    } else {
+        $failed = ($failed + 1)
+    }
+
+    # Check 3: .env file
     let env_check = (validate_env_file)
     $checks = ($checks | append $env_check)
     if $env_check.passed {
@@ -34,7 +45,7 @@ export def validate_environment [] {
         $failed = ($failed + 1)
     }
 
-    # Check 3: Pre-commit hooks
+    # Check 4: Pre-commit hooks
     let hooks_check = (validate_precommit_hooks)
     $checks = ($checks | append $hooks_check)
     if $hooks_check.passed {
@@ -43,7 +54,7 @@ export def validate_environment [] {
         $failed = ($failed + 1)
     }
 
-    # Check 4: Go build
+    # Check 5: Go build
     let build_check = (validate_go_build)
     $checks = ($checks | append $build_check)
     if $build_check.passed {
@@ -88,11 +99,35 @@ def validate_go_mod [] {
     }
 }
 
+# Validate local Go workspace exists
+# Args:
+#   local_env_path: string - Path to local Go environment
+def validate_go_workspace [local_env_path: string] {
+    print $"  Checking ($local_env_path) workspace..."
+
+    if not ($local_env_path | path exists) {
+        print $"  ❌ ($local_env_path) workspace not found"
+        return {name: "go-workspace", passed: false, message: $"($local_env_path) workspace not found"}
+    }
+
+    # Check required subdirectories
+    let pkg_exists = (($local_env_path | path join "pkg") | path exists)
+    let cache_exists = (($local_env_path | path join "cache") | path exists)
+
+    if $pkg_exists and $cache_exists {
+        print $"  ✅ ($local_env_path) workspace configured"
+        return {name: "go-workspace", passed: true, message: $"($local_env_path) workspace configured"}
+    } else {
+        print $"  ⚠️  ($local_env_path) workspace incomplete"
+        return {name: "go-workspace", passed: false, message: $"($local_env_path) workspace missing subdirectories"}
+    }
+}
+
 # Validate .env file exists
 def validate_env_file [] {
     print "  Checking .env file..."
 
-    if ".env" | path exists {
+    if (".env" | path exists) {
         print "  ✅ .env file exists"
         return {name: ".env", passed: true, message: ".env file exists"}
     } else {
@@ -105,7 +140,7 @@ def validate_env_file [] {
 def validate_precommit_hooks [] {
     print "  Checking pre-commit hooks..."
 
-    if ".git/hooks/pre-commit" | path exists {
+    if (".git/hooks/pre-commit" | path exists) {
         print "  ✅ Pre-commit hooks installed"
         return {name: "pre-commit", passed: true, message: "Pre-commit hooks installed"}
     } else {

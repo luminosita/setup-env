@@ -40,13 +40,16 @@ def test_modules_exist [] {
     print "\n🧪 Test 1: Verify all required modules exist"
 
     let modules = [
-        "python/lib/os_detection.nu"
+        "common/lib/os_detection.nu"
+        "common/lib/common.nu"
+        "common/lib/interactive.nu"
+        "common/lib/template_config.nu"
+        "common/lib/config_setup.nu"
+        "common/lib/prerequisites_base.nu"
         "python/lib/prerequisites.nu"
         "python/lib/venv_setup.nu"
         "python/lib/deps_install.nu"
-        "python/lib/config_setup.nu"
         "python/lib/validation.nu"
-        "python/lib/interactive.nu"
         "python/setup.nu"
     ]
 
@@ -110,7 +113,7 @@ def test_silent_mode_flag [] {
 def test_os_detection [] {
     print "\n🧪 Test 5: Test OS detection module"
 
-    let result = (nu -c "use python/lib/os_detection.nu; os_detection detect_os" | complete)
+    let result = (nu -c "use common/lib/os_detection.nu; os_detection detect_os" | complete)
 
     assert ($result.exit_code == 0) $"OS detection failed: ($result.stderr)"
 
@@ -167,7 +170,7 @@ def test_venv_creation [] {
 def test_interactive_silent_mode [] {
     print "\n🧪 Test 9: Test interactive module (silent mode)"
 
-    let result = (nu -c "use python/lib/interactive.nu; interactive get_setup_preferences true" | complete)
+    let result = (nu -c "use common/lib/interactive.nu; interactive get_setup_preferences true" | complete)
 
     assert ($result.exit_code == 0) $"Interactive module failed: ($result.stderr)"
 

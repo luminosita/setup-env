@@ -17,7 +17,8 @@
 #       exit 1
 #   }
 
-use common.nu *
+use ../../common/lib/common.nu *
+use ../../common/lib/prerequisites_base.nu *
 
 # Check if all prerequisites are available and meet version requirements
 # Returns structured record with validation results and errors
@@ -35,33 +36,6 @@ export def check_prerequisites [] {
         $errors = ($errors | append $python_check.error)
     }
 
-    # Check Podman
-    let podman_check = (check_podman)
-    let podman_ok = $podman_check.ok
-    let podman_version = $podman_check.version
-
-    if not $podman_ok {
-        $errors = ($errors | append $podman_check.error)
-    }
-
-    # Check Git
-    let git_check = (check_git)
-    let git_ok = $git_check.ok
-    let git_version = $git_check.version
-
-    if not $git_ok {
-        $errors = ($errors | append $git_check.error)
-    }
-
-    # Check Taskfile
-    let task_check = (check_taskfile)
-    let task_ok = $task_check.ok
-    let task_version = $task_check.version
-
-    if not $task_ok {
-        $errors = ($errors | append $task_check.error)
-    }
-
     # Check UV package manager
     let uv_check = (check_uv)
     let uv_ok = $uv_check.ok
@@ -71,28 +45,23 @@ export def check_prerequisites [] {
         $errors = ($errors | append $uv_check.error)
     }
 
-    # Check pre-commit
-    let precommit_check = (check_precommit)
-    let precommit_ok = $precommit_check.ok
-    let precommit_version = $precommit_check.version
-
-    if not $precommit_ok {
-        $errors = ($errors | append $precommit_check.error)
-    }
+    # Check common prerequisites (Podman, Git, Task, pre-commit)
+    let common = (check_common_prerequisites)
+    $errors = ($errors | append $common.errors)
 
     return {
         python: $python_ok,
         python_version: $python_version,
-        podman: $podman_ok,
-        podman_version: $podman_version,
-        git: $git_ok,
-        git_version: $git_version,
-        task: $task_ok,
-        task_version: $task_version,
+        podman: $common.podman,
+        podman_version: $common.podman_version,
+        git: $common.git,
+        git_version: $common.git_version,
+        task: $common.task,
+        task_version: $common.task_version,
         uv: $uv_ok,
         uv_version: $uv_version,
-        precommit: $precommit_ok,
-        precommit_version: $precommit_version,
+        precommit: $common.precommit,
+        precommit_version: $common.precommit_version,
         errors: $errors
     }
 }
@@ -132,106 +101,8 @@ def check_python [] {
     }
 }
 
-# Check Podman availability
-# Helper function (not exported - private to module)
-#
-# Returns: record<ok: bool, version: string, error: string>
-def check_podman [] {
-    let binary_check = (check_binary_exists "podman")
 
-    if not $binary_check.exists {
-        return {
-            ok: false,
-            version: "",
-            error: "Podman not found. Add 'podman@latest' to devbox.json packages."
-        }
-    }
 
-    # Get version
-    let version_result = (get_binary_version "podman" "--version")
-
-    if $version_result.success {
-        print $"✅ Podman installed: ($version_result.version)"
-        return {
-            ok: true,
-            version: $version_result.version,
-            error: ""
-        }
-    } else {
-        return {
-            ok: false,
-            version: "",
-            error: $"Podman found but version check failed: ($version_result.error)"
-        }
-    }
-}
-
-# Check Git availability
-# Helper function (not exported - private to module)
-#
-# Returns: record<ok: bool, version: string, error: string>
-def check_git [] {
-    let binary_check = (check_binary_exists "git")
-
-    if not $binary_check.exists {
-        return {
-            ok: false,
-            version: "",
-            error: "Git not found. Add 'git@latest' to devbox.json packages."
-        }
-    }
-
-    # Get version
-    let version_result = (get_binary_version "git" "--version")
-
-    if $version_result.success {
-        print $"✅ Git installed: ($version_result.version)"
-        return {
-            ok: true,
-            version: $version_result.version,
-            error: ""
-        }
-    } else {
-        return {
-            ok: false,
-            version: "",
-            error: $"Git found but version check failed: ($version_result.error)"
-        }
-    }
-}
-
-# Check if Taskfile is installed
-# Returns: record {installed: bool, version: string, error: string}
-def check_taskfile [] {
-    # Check if task binary exists
-    let binary_check = (check_binary_exists "task")
-
-    if not $binary_check.exists {
-        return {
-            ok: false,
-            version: "",
-            error: "Taskfile not found in PATH. Please add 'go-task' to devbox.json"
-        }
-    }
-
-    # Get version
-    let version_result = (get_binary_version "task" "--version")
-
-    if $version_result.success {
-        print $"✅ Taskfile installed: ($version_result.version)"
-        return {
-            ok: true,
-            version: $version_result.version,
-            error: ""
-        }
-    } else {
-        return {
-            ok: false,
-            version: "",
-            error: $"Taskfile found but version check failed: ($version_result.error)"
-        }
-    }
-}
 
 def check_uv [] {
     # Check if uv binary exists
@@ -268,32 +139,3 @@ def check_uv [] {
 # Helper function (not exported - private to module)
 #
 # Returns: record<ok: bool, version: string, error: string>
-def check_precommit [] {
-    let binary_check = (check_binary_exists "pre-commit")
-
-    if not $binary_check.exists {
-        return {
-            ok: false,
-            version: "",
-            error: "pre-commit not found in PATH. Will be installed with dependencies."
-        }
-    }
-
-    # Get version
-    let version_result = (get_binary_version "pre-commit" "--version")
-
-    if $version_result.success {
-        print $"✅ pre-commit installed: ($version_result.version)"
-        return {
-            ok: true,
-            version: $version_result.version,
-            error: ""
-        }
-    } else {
-        return {
-            ok: false,
-            version: "",
-            error: $"pre-commit found but version check failed: ($version_result.error)"
-        }
-    }
-}
