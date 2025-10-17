@@ -33,3 +33,4 @@ Thumbs.db
 .env
 *.egg-info
 .task
+.devbox

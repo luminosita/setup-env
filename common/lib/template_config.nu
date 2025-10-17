@@ -9,17 +9,28 @@
 
 use common.nu *
 
-# Get list of files to process (excludes .git, .venv, node_modules, etc.)
+# Get list of files to process (excludes .git, .venv, node_modules, .go, vendor, etc.)
 def get_files_to_process [] {
     glob **/*
     | where ($it | path type) == "file"
     | where {|file|
         not (
+            # Version control
             ($file | str contains ".git/") or
+            # Python
             ($file | str contains ".venv") or
-            ($file | str contains "node_modules/") or
             ($file | str contains "__pycache__/") or
             ($file | str contains ".pyc") or
+            # Node.js
+            ($file | str contains "node_modules/") or
+            # Go
+            ($file | str contains ".go/") or
+            ($file | str contains "vendor/") or
+            ($file | str contains "tmp/") or
+            ($file | str ends-with ".test") or
+            ($file | str ends-with ".out") or
+            ($file | str ends-with "wire_gen.go") or
+            # Build artifacts
             ($file | str contains "dist/") or
             ($file | str contains "build/") or
             ($file | str ends-with ".lock")
@@ -131,7 +142,7 @@ export def rename_src_folder [app_path_name: string] {
 
     # Check if old path exists
     if not ($old_path | path exists) {
-        print $"  ℹ️  Source folder ($old_path) does not exist (may already be renamed)\n"
+        print $"  ℹ️  Source folder ($old_path) does not exist \(may already be renamed\)\n"
         return {success: true, renamed: false, error: ""}
     }
 
