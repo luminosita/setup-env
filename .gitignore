@@ -12,8 +12,12 @@ uv*
 .uv/
 
 # Go
-.go/
+.go
+.go_*
+go.mod
+.env.example
 
+.pre-commit-config.yaml
 # IDE
 .vscode/
 .idea/

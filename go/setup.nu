@@ -12,6 +12,7 @@ use ../common/lib/os_detection.nu *
 use lib/prerequisites.nu *
 use lib/venv_setup.nu *
 use lib/deps_install.nu *
+use lib/tools_install.nu *
 use ../common/lib/config_setup.nu *
 use lib/validation.nu *
 use ../common/lib/interactive.nu *
@@ -168,9 +169,25 @@ def main [
 
     print $"✅ Dependencies installed: ($deps_result.packages) packages\n"
 
-    # Phase 5: Configuration Setup
+    # Phase 5: Development Tools Installation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 5: Configuration Setup"
+    print "Phase 5: Development Tools Installation"
+    print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+
+    let tools_result = (install_tools ".go")
+
+    if not $tools_result.success {
+        for failed in $tools_result.failed {
+            $errors = ($errors | append $"Tool ($failed.tool) failed to install")
+        }
+        print $"⚠️  Tools installation completed with ($tools_result.failed | length) failures\n"
+    } else {
+        print $"✅ All development tools installed: ($tools_result.installed) tools\n"
+    }
+
+    # Phase 6: Configuration Setup
+    print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    print "Phase 6: Configuration Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
     let config_result = (setup_configuration ".go")
@@ -184,9 +201,9 @@ def main [
         print "✅ Configuration complete\n"
     }
 
-    # Phase 6: Environment Validation
+    # Phase 7: Environment Validation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 6: Environment Validation"
+    print "Phase 7: Environment Validation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
     let validation = (validate_environment ".go")
