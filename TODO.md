@@ -1,5 +1,5 @@
 - [ ] Adjust Python and Go scripts to first validate environment. These should be runnable from devbox shell
-
+- [ ] Validate if ..pre-commit-config.yaml exists before installing pre-commit hook
 - [ ] Adjust devbox.json to add support for java
 - [ ] Add Java based tasks into Taskfile.yml
 - [ ] Create ./java with libraries and tests based on ./go
