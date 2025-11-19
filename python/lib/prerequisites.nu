@@ -80,6 +80,7 @@ def check_python [] {
     let binary_check = (check_binary_exists "python")
 
     if not $binary_check.exists {
+        print "❌ Python not found. Add 'python@3.11' to devbox.json packages."
         return {
             installed: false,
             version: "",
@@ -98,6 +99,7 @@ def check_python [] {
             error: ""
         }
     } else {
+        print $"❌ Python found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -118,6 +120,7 @@ def check_uv [] {
     let binary_check = (check_binary_exists "uv")
 
     if not $binary_check.exists {
+        print "❌ UV package manager not found in PATH. Please add 'uv' to devbox.json"
         return {
             ok: false,
             version: "",
@@ -140,6 +143,7 @@ def check_uv [] {
                 error: ""
             }
         } else {
+            print $"❌ UV: ($validation.error). Required: >= 0.8.23"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -147,6 +151,7 @@ def check_uv [] {
             }
         }
     } else {
+        print $"❌ UV found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",

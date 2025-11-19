@@ -11,6 +11,7 @@ export def check_nushell [] {
     let binary_check = (check_binary_exists "nu")
 
     if not $binary_check.exists {
+        print "❌ NuShell not found. Add 'nushell@latest' to devbox.json packages."
         return {
             ok: false,
             version: "",
@@ -33,6 +34,7 @@ export def check_nushell [] {
                 error: ""
             }
         } else {
+            print $"❌ NuShell: ($validation.error). Required: >= 0.108.0"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -40,6 +42,7 @@ export def check_nushell [] {
             }
         }
     } else {
+        print $"❌ NuShell found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -54,6 +57,7 @@ export def check_podman [] {
     let binary_check = (check_binary_exists "podman")
 
     if not $binary_check.exists {
+        print "❌ Podman not found. Add 'podman@latest' to devbox.json packages."
         return {
             ok: false,
             version: "",
@@ -76,6 +80,7 @@ export def check_podman [] {
                 error: ""
             }
         } else {
+            print $"❌ Podman: ($validation.error). Required: >= 5.6.2"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -83,6 +88,7 @@ export def check_podman [] {
             }
         }
     } else {
+        print $"❌ Podman found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -97,6 +103,7 @@ export def check_podman_compose [] {
     let binary_check = (check_binary_exists "podman-compose")
 
     if not $binary_check.exists {
+        print "❌ podman-compose not found. Add 'podman-compose@latest' to devbox.json packages."
         return {
             ok: false,
             version: "",
@@ -119,6 +126,7 @@ export def check_podman_compose [] {
                 error: ""
             }
         } else {
+            print $"❌ podman-compose: ($validation.error). Required: >= 1.5.0"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -126,6 +134,7 @@ export def check_podman_compose [] {
             }
         }
     } else {
+        print $"❌ podman-compose found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -140,6 +149,7 @@ export def check_hadolint [] {
     let binary_check = (check_binary_exists "hadolint")
 
     if not $binary_check.exists {
+        print "❌ hadolint not found. Add 'hadolint@latest' to devbox.json packages."
         return {
             ok: false,
             version: "",
@@ -162,6 +172,7 @@ export def check_hadolint [] {
                 error: ""
             }
         } else {
+            print $"❌ Hadolint: ($validation.error). Required: >= 2.13.1"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -169,6 +180,7 @@ export def check_hadolint [] {
             }
         }
     } else {
+        print $"❌ Hadolint found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -183,6 +195,7 @@ export def check_trivy [] {
     let binary_check = (check_binary_exists "trivy")
 
     if not $binary_check.exists {
+        print "❌ trivy not found. Add 'trivy@latest' to devbox.json packages."
         return {
             ok: false,
             version: "",
@@ -205,6 +218,7 @@ export def check_trivy [] {
                 error: ""
             }
         } else {
+            print $"❌ Trivy: ($validation.error). Required: >= 0.66.0"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -212,6 +226,7 @@ export def check_trivy [] {
             }
         }
     } else {
+        print $"❌ Trivy found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -226,6 +241,7 @@ export def check_sonarscanner [] {
     let binary_check = (check_binary_exists "sonar-scanner")
 
     if not $binary_check.exists {
+        print "❌ sonar-scanner not found. Add 'sonar-scanner-cli@latest' to devbox.json packages."
         return {
             ok: false,
             version: "",
@@ -248,6 +264,7 @@ export def check_sonarscanner [] {
                 error: ""
             }
         } else {
+            print $"❌ Sonar Scanner: ($validation.error). Required: >= 7.2"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -255,6 +272,7 @@ export def check_sonarscanner [] {
             }
         }
     } else {
+        print $"❌ Sonar Scanner found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -269,6 +287,7 @@ export def check_git [] {
     let binary_check = (check_binary_exists "git")
 
     if not $binary_check.exists {
+        print "❌ Git not found. Add 'git@latest' to devbox.json packages."
         return {
             ok: false,
             version: "",
@@ -287,6 +306,7 @@ export def check_git [] {
             error: ""
         }
     } else {
+        print $"❌ Git found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -302,6 +322,7 @@ export def check_taskfile [] {
     let binary_check = (check_binary_exists "task")
 
     if not $binary_check.exists {
+        print "❌ Taskfile not found in PATH. Please add 'go-task' to devbox.json"
         return {
             ok: false,
             version: "",
@@ -324,6 +345,7 @@ export def check_taskfile [] {
                 error: ""
             }
         } else {
+            print $"❌ Taskfile: ($validation.error). Required: >= 3.45.4"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -331,6 +353,7 @@ export def check_taskfile [] {
             }
         }
     } else {
+        print $"❌ Taskfile found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",
@@ -345,6 +368,7 @@ export def check_precommit [] {
     let binary_check = (check_binary_exists "pre-commit")
 
     if not $binary_check.exists {
+        print "❌ pre-commit not found in PATH. Will be installed with dependencies."
         return {
             ok: false,
             version: "",
@@ -367,6 +391,7 @@ export def check_precommit [] {
                 error: ""
             }
         } else {
+            print $"❌ pre-commit: ($validation.error). Required: >= 4.3.0"
             return {
                 ok: false,
                 version: $version_result.version,
@@ -374,6 +399,7 @@ export def check_precommit [] {
             }
         }
     } else {
+        print $"❌ pre-commit found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",

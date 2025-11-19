@@ -170,7 +170,6 @@ def main [
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
     let prereqs = (check_prerequisites $project_type)
-    print_prerequisites $prereqs
 
     if ($prereqs.errors | length) > 0 {
         print "\n❌ Prerequisites check failed:\n"

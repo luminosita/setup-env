@@ -69,6 +69,7 @@ def check_go [] {
     let binary_check = (check_binary_exists "go")
 
     if not $binary_check.exists {
+        print "❌ Go not found. Add 'go@latest' to devbox.json packages."
         return {
             installed: false,
             version: "",
@@ -87,6 +88,7 @@ def check_go [] {
             error: ""
         }
     } else {
+        print $"❌ Go found but version check failed: ($version_result.error)"
         return {
             ok: false,
             version: "",

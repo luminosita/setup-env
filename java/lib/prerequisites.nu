@@ -57,79 +57,12 @@ export def check_prerequisites [
     }
 }
 
-# Print prerequisites check results with formatted output
-# Args:
-#   prereqs: record - Result from check_prerequisites
-export def print_prerequisites [prereqs: record] {
-    print "🔍 Checking prerequisites...\n"
-
-    # Print common prerequisites
-    if $prereqs.podman {
-        print $"✅ Podman installed"
-    } else {
-        print "❌ Podman not found"
-    }
-
-    if $prereqs.git {
-        print $"✅ Git installed"
-    } else {
-        print "❌ Git not found"
-    }
-
-    if $prereqs.task {
-        print $"✅ Task installed"
-    } else {
-        print "❌ Task not found"
-    }
-
-    if $prereqs.precommit {
-        print $"✅ pre-commit installed"
-    } else {
-        print "❌ pre-commit not found"
-    }
-
-    # Print Java
-    if $prereqs.java {
-        print $"✅ Java installed: ($prereqs.java_version)"
-    } else {
-        let error = ($prereqs.errors | where {|e| $e =~ "Java"} | first?)
-        if ($error | is-not-empty) {
-            print $"❌ Java not found or invalid: ($error)"
-        } else {
-            print "❌ Java not found"
-        }
-    }
-
-    # Print Maven
-    if $prereqs.maven {
-        print $"✅ Maven installed: ($prereqs.maven_version)"
-    } else {
-        let error = ($prereqs.errors | where {|e| $e =~ "Maven"} | first?)
-        if ($error | is-not-empty) {
-            print $"❌ Maven not found or invalid: ($error)"
-        } else {
-            print "❌ Maven not found"
-        }
-    }
-
-    # Print Gradle
-    if $prereqs.gradle {
-        print $"✅ Gradle installed: ($prereqs.gradle_version)"
-    } else {
-        let error = ($prereqs.errors | where {|e| $e =~ "Gradle"} | first?)
-        if ($error | is-not-empty) {
-            print $"❌ Gradle not found or invalid: ($error)"
-        } else {
-            print "❌ Gradle not found"
-        }
-    }
-}
-
 # Check Java installation (>= 24)
 # Returns: record {ok: bool, version: string, error: string}
 def check_java [] {
     let java_check = (check_binary_exists "java")
     if not $java_check.exists {
+        print "❌ Java not found in PATH"
         return {ok: false, version: "", error: "Java not found in PATH"}
     }
 
@@ -146,6 +79,7 @@ def check_java [] {
     let version_str = ($version_line | parse -r 'version "([^"]+)"' | get capture0.0? | default "")
 
     if ($version_str | is-empty) {
+        print "❌ Could not parse Java version"
         return {ok: false, version: "", error: "Could not parse Java version"}
     }
 
@@ -153,12 +87,14 @@ def check_java [] {
     let validation = (validate_version $version_str 24 0)
 
     if $validation.valid {
+        print $"✅ Java installed: ($version_str)"
         return {
             ok: true,
             version: $version_str,
             error: ""
         }
     } else {
+        print $"❌ Java version ($version_str) does not meet minimum requirement: >= 24"
         return {
             ok: false,
             version: $version_str,
@@ -172,12 +108,14 @@ def check_java [] {
 def check_maven [] {
     let mvn_check = (check_binary_exists "mvn")
     if not $mvn_check.exists {
+        print "❌ Maven (mvn) not found in PATH"
         return {ok: false, version: "", error: "Maven (mvn) not found in PATH"}
     }
 
     let version_result = (get_binary_version "mvn" "--version")
 
     if ($version_result.version | is-empty) {
+        print "❌ Could not determine Maven version"
         return {ok: false, version: "", error: "Could not determine Maven version"}
     }
 
@@ -185,12 +123,14 @@ def check_maven [] {
     let validation = (validate_version $version_result.version 3 9 "Apache Maven " "Maven")
 
     if $validation.valid {
+        print $"✅ Maven installed: ($version_result.version)"
         return {
             ok: true,
             version: $version_result.version,
             error: ""
         }
     } else {
+        print $"❌ Maven: ($validation.error). Required: >= 3.9.11"
         return {
             ok: false,
             version: $version_result.version,
@@ -204,12 +144,14 @@ def check_maven [] {
 def check_gradle [] {
     let gradle_check = (check_binary_exists "gradle")
     if not $gradle_check.exists {
+        print "❌ Gradle not found in PATH"
         return {ok: false, version: "", error: "Gradle not found in PATH"}
     }
 
     let version_result = (get_binary_version "gradle" "--version")
 
     if ($version_result.version | is-empty) {
+        print "❌ Could not determine Gradle version"
         return {ok: false, version: "", error: "Could not determine Gradle version"}
     }
 
@@ -217,12 +159,14 @@ def check_gradle [] {
     let validation = (validate_version $version_result.version 8 14 "Gradle " "Gradle")
 
     if $validation.valid {
+        print $"✅ Gradle installed: ($version_result.version)"
         return {
             ok: true,
             version: $version_result.version,
             error: ""
         }
     } else {
+        print $"❌ Gradle: ($validation.error). Required: >= 8.14.3"
         return {
             ok: false,
             version: $version_result.version,
