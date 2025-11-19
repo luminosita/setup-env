@@ -1,3 +1,5 @@
+- [ ] Adjust Python and Go scripts to first validate environment. These should be runnable from devbox shell
+
 - [ ] Adjust devbox.json to add support for java
 - [ ] Add Java based tasks into Taskfile.yml
 - [ ] Create ./java with libraries and tests based on ./go
