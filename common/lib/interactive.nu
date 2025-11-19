@@ -226,7 +226,7 @@ export def get_setup_preferences [silent: bool = false] {
     }
 
     # Prompt for verbose mode
-    let verbose = (prompt_yes_no "Enable verbose output?" true)
+    let verbose = (prompt_yes_no "Enable verbose output?" false)
 
     print ""
 
