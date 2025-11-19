@@ -64,17 +64,45 @@ tasks:
     generates:
       - dist/setup-go.nu
 
+  java:test:
+    desc: Run all Java setup script tests (unit + integration)
+    cmds:
+      - task: java:test:unit
+      - task: java:test:integration
+
+  java:test:unit:
+    desc: Run Java setup script unit tests
+    cmds:
+      - 'failed=0; for test in java/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
+
+  java:test:integration:
+    desc: Run Java integration tests for setup scripts
+    cmds:
+      - nu java/tests/integration/run_all_tests.nu
+
+  java:build:
+    desc: "Build standalone Java setup script"
+    cmds:
+      - mkdir -p dist
+      - nu build.nu java
+    sources:
+      - java/**/*.nu
+    generates:
+      - dist/setup-java.nu
+
   build:
     desc: "Build all standalone setup scripts"
     cmds:
       - task: python:build
       - task: go:build
+      - task: java:build
 
   test:
-    desc: Run all tests (Python + Go)
+    desc: Run all tests (Python + Go + Java)
     cmds:
       - task: python:test
       - task: go:test
+      - task: java:test
 
   help:
     desc: Show available tasks

@@ -1,8 +1,8 @@
 #!/usr/bin/env nu
 
-# Go Development Environment Setup Script
+# Java Development Environment Setup Script
 #
-# This script uses the common setup base with Go-specific configuration
+# This script uses the common setup base with Java-specific configuration
 #
 # Usage:
 #   ./setup.nu              # Interactive mode
@@ -13,7 +13,6 @@ use ../common/lib/os_detection.nu *
 use lib/prerequisites.nu *
 use lib/venv_setup.nu *
 use lib/deps_install.nu *
-use lib/tools_install.nu *
 use ../common/lib/config_setup.nu *
 use lib/validation.nu *
 use ../common/lib/interactive.nu *
@@ -24,7 +23,7 @@ use ../common/lib/common.nu *
 def display_welcome [silent: bool] {
     if not $silent {
         print "\n╔═══════════════════════════════════════════════════════════╗"
-        print "║   Go Development Environment Setup                        ║"
+        print "║   Java Development Environment Setup                      ║"
         print "╚═══════════════════════════════════════════════════════════╝\n"
     } else {
         print "🤖 Running setup in silent mode (CI/CD)"
@@ -57,13 +56,12 @@ def display_completion [duration: duration, errors: list] {
 # Display next steps
 def display_next_steps [] {
     print "📚 Next Steps:\n"
-    print "  1. Start development server:"
-    print "     task dev\n"
+    print "  1. Build the project:"
+    print "     mvn clean install   # Maven"
+    print "     gradle build        # Gradle\n"
     print "  2. Run tests:"
     print "     task test\n"
-    print "  3. Build the project:"
-    print "     task build\n"
-    print "  4. View all available commands:"
+    print "  3. View all available commands:"
     print "     task --list\n"
 }
 
@@ -76,12 +74,12 @@ def quick_validate [] {
     }
 
     # Check if local env exists
-    if not (".go" | path exists) {
+    if not (".java" | path exists) {
         exit 1
     }
 
     # Run validation
-    let validation = (validate_environment ".go")
+    let validation = (validate_environment ".java")
     if $validation.failed > 0 {
         exit 1
     }
@@ -110,8 +108,14 @@ def main [
 
     # Phase 0: Application Configuration (only if placeholders exist)
     let has_placeholders = (
-        ("go.mod" | path exists) and
-        (open go.mod | str contains "change-me")
+        ("pom.xml" | path exists) and
+        (open pom.xml | str contains "change-me")
+    ) or (
+        ("build.gradle" | path exists) and
+        (open build.gradle | str contains "change-me")
+    ) or (
+        ("build.gradle.kts" | path exists) and
+        (open build.gradle.kts | str contains "change-me")
     )
 
     let app_config = if $has_placeholders {
@@ -176,51 +180,35 @@ def main [
     print "Phase 3: Virtual Environment Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let venv_result = (create_venv ".go" "")
+    let venv_result = (create_venv ".java" "")
 
     if not $venv_result.success {
         print $"❌ Virtual environment creation failed: ($venv_result.error)"
         exit 1
     }
 
-    print $"✅ Virtual environment ready: Go ($venv_result.main_bin_version)\n"
+    print $"✅ Virtual environment ready: Java ($venv_result.main_bin_version)\n"
 
     # Phase 4: Dependency Installation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     print "Phase 4: Dependency Installation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let deps_result = (install_dependencies ".go")
+    let deps_result = (install_dependencies ".java")
 
     if not $deps_result.success {
         print $"❌ Dependency installation failed: ($deps_result.error)"
         exit 1
     }
 
-    print $"✅ Dependencies installed: ($deps_result.packages) packages\n"
+    print $"✅ Dependencies installed: ($deps_result.packages) artifacts\n"
 
-    # Phase 5: Development Tools Installation
+    # Phase 5: Configuration Setup
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 5: Development Tools Installation"
+    print "Phase 5: Configuration Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let tools_result = (install_tools ".go")
-
-    if not $tools_result.success {
-        for failed in $tools_result.failed {
-            $errors = ($errors | append $"Tool ($failed.tool) failed to install")
-        }
-        print $"⚠️  Tools installation completed with ($tools_result.failed | length) failures\n"
-    } else {
-        print $"✅ All development tools installed: ($tools_result.installed) tools\n"
-    }
-
-    # Phase 6: Configuration Setup
-    print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 6: Configuration Setup"
-    print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-
-    let config_result = (setup_configuration ".go")
+    let config_result = (setup_configuration ".java")
 
     if not $config_result.success {
         for error in $config_result.errors {
@@ -231,12 +219,12 @@ def main [
         print "✅ Configuration complete\n"
     }
 
-    # Phase 7: Environment Validation
+    # Phase 6: Environment Validation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 7: Environment Validation"
+    print "Phase 6: Environment Validation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let validation = (validate_environment ".go")
+    let validation = (validate_environment ".java")
 
     if $validation.failed > 0 {
         $errors = ($errors | append $"($validation.failed) validation checks failed")

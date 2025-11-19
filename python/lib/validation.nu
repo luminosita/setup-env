@@ -23,7 +23,6 @@ export def validate_environment [venv_path: string = ".venv"] {
 
     # Run all checks
     $checks = ($checks | append (validate_python_version $venv_path))
-    $checks = ($checks | append (validate_taskfile))
     $checks = ($checks | append (validate_dependencies $venv_path))
     $checks = ($checks | append (validate_env_file))
     $checks = ($checks | append (validate_precommit_hooks))
@@ -86,32 +85,6 @@ export def validate_python_version [venv_path: string = ".venv"] {
             passed: false,
             message: "",
             error: $validation.error
-        }
-    }
-}
-
-# Validate Taskfile functionality
-# Assumes Taskfile binary exists (validated in earlier setup phase)
-# Returns: record {name, passed, message, error}
-def validate_taskfile [] {
-    let check_name = "Taskfile Functionality"
-
-    # Check task --list (assumes task binary exists)
-    let list_result = (^task --list | complete)
-
-    if not (common command_succeeded $list_result) {
-        return {
-            name: $check_name,
-            passed: false,
-            message: "",
-            error: $"Taskfile --list command failed: ($list_result.stderr)"
-        }
-    } else {
-        return {
-            name: $check_name,
-            passed: true,
-            message: $"Taskfile functional",
-            error: ""
         }
     }
 }

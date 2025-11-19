@@ -5,6 +5,7 @@
 # Usage:
 #   nu build.nu python --yes    # Build Python setup script
 #   nu build.nu go --yes        # Build Go setup script
+#   nu build.nu java --yes      # Build Java setup script
 #
 # Features:
 # - Discovers modules recursively
@@ -25,6 +26,25 @@ def parse_use_statements [file_path: string] {
             let parts = ($line | str replace "use " "" | split row " ")
             let module_path = ($parts | first)
             $module_path | path basename | str replace '.nu' ''
+        }
+}
+
+# Discover template files in templates directory
+# Args:
+#   base_dir: string - Base directory (python, go, or java)
+# Returns: list<record {name: string, content: string}> - List of template files
+def discover_templates [base_dir: string] {
+    let templates_dir = ($base_dir | path join "templates")
+
+    if not ($templates_dir | path exists) {
+        return []
+    }
+
+    glob ($templates_dir | path join "*.template")
+        | each { |file|
+            let name = ($file | path basename)
+            let content = (open $file --raw)
+            {name: $name, content: $content}
         }
 }
 
@@ -72,6 +92,26 @@ def discover_required_modules [main_script: string, lib_dir: string, common_lib_
     }
 }
 
+# Create embedded templates module from template files
+# Args:
+#   templates: list<record {name: string, content: string}> - Template files
+# Returns: string - Module definition with embedded templates
+def create_templates_module [templates: list] {
+    if ($templates | is-empty) {
+        return ""
+    }
+
+    # Create constant definitions for each template
+    let template_defs = $templates | each { |tmpl|
+        let const_name = (template_filename_to_constant $tmpl.name)
+        # Escape the content for nushell strings (escape backslashes and quotes)
+        let escaped = ($tmpl.content | str replace -a '\' '\\' | str replace -a '"' '\"')
+        $"export const ($const_name) = \"($escaped)\""
+    } | str join "\n\n"
+
+    return $"module templates {\n($template_defs)\n}\n"
+}
+
 # Transform use statements in content to use inline module names
 # Args:
 #   content: string - File content to transform
@@ -95,14 +135,67 @@ def transform_use_statements [content: string] {
         | str join "\n"
 }
 
+# Convert template filename to constant name
+# Args:
+#   template_filename: string - Template filename (e.g., "settings.xml.template")
+# Returns: string - Constant name (e.g., "SETTINGS_XML_TEMPLATE")
+def template_filename_to_constant [template_filename: string] {
+    let base = ($template_filename | str replace ".template" "" | str replace "." "_" | str upcase)
+    $"($base)_TEMPLATE"
+}
+
+# Transform config_files module to use embedded templates
+# Args:
+#   content: string - Original config_files module content
+# Returns: string - Transformed content that uses embedded templates
+def transform_config_files_for_standalone [content: string] {
+    let result = (
+        $content
+        | lines
+        | reduce -f {lines: [], skip: false, next_template: null} { |line, acc|
+            if $line =~ '# Get the templates directory path' {
+                # Skip the get_templates_dir function entirely
+                {lines: $acc.lines, skip: true, next_template: $acc.next_template}
+            } else if $acc.skip {
+                if $line =~ '^}$' {
+                    {lines: $acc.lines, skip: false, next_template: $acc.next_template}
+                } else {
+                    {lines: $acc.lines, skip: true, next_template: $acc.next_template}
+                }
+            } else if $line =~ 'let template_path = \(get_templates_dir \| path join "(.+\.template)"\)' {
+                # Extract template filename and convert to constant name
+                # Match pattern: (get_templates_dir | path join "filename.template")
+                let matches = ($line | parse -r 'let template_path = \(get_templates_dir \| path join "(?P<filename>.+\.template)"\)')
+                if ($matches | length) > 0 {
+                    let template_file = ($matches | first | get filename)
+                    let const_name = (template_filename_to_constant $template_file)
+                    # Store for next line and skip this line
+                    {lines: $acc.lines, skip: $acc.skip, next_template: $const_name}
+                } else {
+                    {lines: ($acc.lines | append $line), skip: $acc.skip, next_template: $acc.next_template}
+                }
+            } else if $line =~ 'let template = \(open \$template_path --raw\)' and ($acc.next_template != null) {
+                # Replace with embedded template constant
+                let indent = ($line | str replace -r '^(\s*).*' '$1')
+                let new_line = $"($indent)let template = templates ($acc.next_template)"
+                {lines: ($acc.lines | append $new_line), skip: $acc.skip, next_template: null}
+            } else {
+                {lines: ($acc.lines | append $line), skip: $acc.skip, next_template: $acc.next_template}
+            }
+        }
+    )
+
+    $result.lines | str join "\n"
+}
+
 # Main entry point
 def main [
-    base_dir: string = "python"  # Base directory (python or go)
+    base_dir: string = "python"  # Base directory (python, go, or java)
     --yes (-y)                    # Auto-confirm build
 ] {
     # Validate base_dir
-    if $base_dir not-in ["python", "go"] {
-        print $"❌ Error: base_dir must be 'python' or 'go', got '($base_dir)'"
+    if $base_dir not-in ["python", "go", "java"] {
+        print $"❌ Error: base_dir must be 'python', 'go', or 'java', got '($base_dir)'"
         exit 1
     }
 
@@ -134,6 +227,9 @@ def main [
     let required_modules = $discovered.modules
     let common_modules = $discovered.common_modules
 
+    # Discover template files
+    let templates = (discover_templates $base_dir)
+
     # Display analysis
     print $"📦 Found ($required_modules | length) base modules + ($common_modules | length) common modules:"
     for module in $required_modules {
@@ -145,6 +241,14 @@ def main [
         let path = ($common_lib_dir | path join $"($module).nu")
         let size = (ls $path | get size | first)
         print $"  • ($module) \(($size) bytes\) [common]"
+    }
+
+    if ($templates | length) > 0 {
+        print $"\n📄 Found ($templates | length) template files:"
+        for tmpl in $templates {
+            let size = ($tmpl.content | str length)
+            print $"  • ($tmpl.name) \(($size) bytes\)"
+        }
     }
     print ""
 
@@ -176,6 +280,15 @@ def main [
 
     print "🔨 Building standalone script...\n"
 
+    # Create templates module if templates exist
+    let templates_module = if ($templates | length) > 0 {
+        let template_count = ($templates | length)
+        print $"  Processing templates module \(($template_count) templates\)"
+        create_templates_module $templates
+    } else {
+        ""
+    }
+
     # Build common module definitions first
     let common_module_defs = $common_modules | each { |name|
         let path = ($common_lib_dir | path join $"($name).nu")
@@ -192,12 +305,22 @@ def main [
         print $"  Processing base module: ($name)"
 
         let raw_content = open $path
-        let content = transform_use_statements $raw_content
+        # Apply special transformation for config_files module if it uses templates
+        let content = if $name == "config_files" and ($templates | length) > 0 {
+            let transformed = transform_use_statements $raw_content
+            transform_config_files_for_standalone $transformed
+        } else {
+            transform_use_statements $raw_content
+        }
         $"module ($name) {\n($content)\n}\n"
     } | str join "\n"
 
-    # Combine all modules
-    let all_modules = ($common_modules | append $required_modules)
+    # Combine all modules (templates first if exists, then common, then base)
+    let all_modules = if ($templates | length) > 0 {
+        ["templates"] | append $common_modules | append $required_modules
+    } else {
+        $common_modules | append $required_modules
+    }
 
     # Generate use statements for all modules
     let use_statements = $all_modules
@@ -211,8 +334,12 @@ def main [
         | where not ($it | str starts-with "use ")
         | str join "\n"
 
-    # Combine all parts (common modules first, then base modules)
-    let standalone = $"#!/usr/bin/env nu\n\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($main)"
+    # Combine all parts (templates module first if exists, then common modules, then base modules)
+    let standalone = if ($templates | length) > 0 {
+        $"#!/usr/bin/env nu\n\n($templates_module)\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($main)"
+    } else {
+        $"#!/usr/bin/env nu\n\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($main)"
+    }
 
     # Ensure output directory exists
     mkdir dist

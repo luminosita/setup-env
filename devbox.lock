@@ -101,6 +101,147 @@
         }
       }
     },
+    "gradle@latest": {
+      "last_modified": "2025-11-15T07:28:48Z",
+      "plugin_version": "0.0.1",
+      "resolved": "github:NixOS/nixpkgs/1d4c88323ac36805d09657d13a5273aea1b34f0c#gradle",
+      "source": "devbox-search",
+      "version": "8.14.3",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/687cpjcz73b8d48qp9wrd7avz9c4wxbl-gradle-8.14.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/687cpjcz73b8d48qp9wrd7avz9c4wxbl-gradle-8.14.3"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/yi72pplirvic8c0v2yhx09byagyq13i3-gradle-8.14.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/yi72pplirvic8c0v2yhx09byagyq13i3-gradle-8.14.3"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/cvldh3159939289g9ga45nw25gzvbh0r-gradle-8.14.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/cvldh3159939289g9ga45nw25gzvbh0r-gradle-8.14.3"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/rck04lfaywfxrjxjp4z2ik3zdg5j09mb-gradle-8.14.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/rck04lfaywfxrjxjp4z2ik3zdg5j09mb-gradle-8.14.3"
+        }
+      }
+    },
+    "jdk@latest": {
+      "last_modified": "2025-10-22T20:59:19Z",
+      "resolved": "github:NixOS/nixpkgs/01b6809f7f9d1183a2b3e081f0a1e6f8f415cb09#jdk8",
+      "source": "devbox-search",
+      "version": "8u462-b08",
+      "systems": {
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/idp53w87pn9034h0b68awnlc9shivzhk-openjdk-8u462-b08",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/rhcz737cn17p57wh0wk4yqymw6zq47hp-openjdk-8u462-b08-debug"
+            },
+            {
+              "name": "jre",
+              "path": "/nix/store/74j8f70zx32avncnv4sv6qm8azmhff97-openjdk-8u462-b08-jre"
+            }
+          ],
+          "store_path": "/nix/store/idp53w87pn9034h0b68awnlc9shivzhk-openjdk-8u462-b08"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/g0vld0dg3dn5666ysjlh8i38qfhx2ndq-openjdk-8u462-b08",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/wb839j89598cdl5ygqqh9r9lgcbcivgm-openjdk-8u462-b08-debug"
+            },
+            {
+              "name": "jre",
+              "path": "/nix/store/py8pqmb01c1qs5779b7lf8r9wrnf0mgb-openjdk-8u462-b08-jre"
+            }
+          ],
+          "store_path": "/nix/store/g0vld0dg3dn5666ysjlh8i38qfhx2ndq-openjdk-8u462-b08"
+        }
+      }
+    },
+    "maven@latest": {
+      "last_modified": "2025-11-15T07:28:48Z",
+      "resolved": "github:NixOS/nixpkgs/1d4c88323ac36805d09657d13a5273aea1b34f0c#maven",
+      "source": "devbox-search",
+      "version": "3.9.11",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/zp4fr56bkvw3pmgg8dhhw4d6fcxgy405-maven-3.9.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/zp4fr56bkvw3pmgg8dhhw4d6fcxgy405-maven-3.9.11"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/vig744sy0wryrlzpgqwmi2hnx8v6lm2g-maven-3.9.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/vig744sy0wryrlzpgqwmi2hnx8v6lm2g-maven-3.9.11"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ldg5n80fd548ghv1jfk1h6qc8xfcqzgp-maven-3.9.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/ldg5n80fd548ghv1jfk1h6qc8xfcqzgp-maven-3.9.11"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/b1pwh5hsbzsd5mc1zkbhblxdws7spgrv-maven-3.9.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/b1pwh5hsbzsd5mc1zkbhblxdws7spgrv-maven-3.9.11"
+        }
+      }
+    },
     "nushell@latest": {
       "last_modified": "2025-10-07T08:41:47Z",
       "resolved": "github:NixOS/nixpkgs/bce5fe2bb998488d8e7e7856315f90496723793c#nushell",

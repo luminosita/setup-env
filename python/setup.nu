@@ -7,6 +7,7 @@
 # Usage:
 #   ./setup.nu              # Interactive mode
 #   ./setup.nu --silent     # Silent mode (CI/CD)
+#   ./setup.nu --validate   # Quick validation check only
 
 use ../common/lib/os_detection.nu *
 use lib/prerequisites.nu *
@@ -65,10 +66,39 @@ def display_next_steps [] {
     print "     task --list\n"
 }
 
+# Quick validation - check if environment is ready
+def quick_validate [] {
+    # Check prerequisites
+    let prereqs = (check_prerequisites)
+    if ($prereqs.errors | length) > 0 {
+        exit 1
+    }
+
+    # Check if venv exists
+    if not (".venv" | path exists) {
+        exit 1
+    }
+
+    # Run validation
+    let validation = (validate_environment ".venv")
+    if $validation.failed > 0 {
+        exit 1
+    }
+
+    exit 0
+}
+
 # Main setup orchestrator
 def main [
-    --silent (-s)  # Run in silent mode (no prompts, use defaults)
+    --silent (-s)       # Run in silent mode (no prompts, use defaults)
+    --validate (-v)     # Quick validation check only
 ] {
+    # Handle validation mode
+    if $validate {
+        quick_validate
+        return
+    }
+
     let start_time = (date now)
 
     # Display welcome

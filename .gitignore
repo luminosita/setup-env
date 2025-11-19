@@ -17,6 +17,19 @@ uv*
 go.mod
 .env.example
 
+# Java
+.java/
+.m2/
+gradle/
+target/
+build/
+*.class
+*.jar
+*.war
+pom.xml
+build.gradle
+build.gradle.kts
+
 .pre-commit-config.yaml
 # IDE
 .vscode/

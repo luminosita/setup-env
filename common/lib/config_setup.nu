@@ -146,6 +146,16 @@ def check_precommit_installed [local_env_path: string] {
 def install_precommit_hooks [local_env_path: string] {
     print "🪝 Installing pre-commit hooks..."
 
+    # Check if .pre-commit-config.yaml exists
+    if not (".pre-commit-config.yaml" | path exists) {
+        print "ℹ️  Skipping pre-commit hooks (no .pre-commit-config.yaml found)"
+        return {
+            success: true,
+            installed: false,
+            error: ""
+        }
+    }
+
     # Check if pre-commit is installed
     let check = (check_precommit_installed $local_env_path)
 

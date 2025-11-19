@@ -8,9 +8,29 @@ use std assert
 use ../lib/tools_install.nu *
 use ../lib/venv_setup.nu *
 
+# Helper to ensure go.mod exists for tests
+def ensure_gomod [] {
+    let had_gomod = ("go.mod" | path exists)
+    if not $had_gomod {
+        "module test\n\ngo 1.21\n" | save go.mod
+    }
+    return $had_gomod
+}
+
+# Helper to cleanup go.mod if we created it
+def cleanup_gomod [had_gomod: bool] {
+    if not $had_gomod {
+        if ("go.mod" | path exists) { rm go.mod }
+        if ("go.sum" | path exists) { rm go.sum }
+    }
+}
+
 # Test 1: Install tools with valid go env
 def test_install_tools_success [] {
     print "Test: Install development tools (success case)"
+
+    # Ensure go.mod exists
+    let had_gomod = (ensure_gomod)
 
     # Create test go env
     let test_goenv = ".go_test_tools"
@@ -34,6 +54,7 @@ def test_install_tools_success [] {
 
     # Cleanup
     rm -rf $test_goenv
+    cleanup_gomod $had_gomod
 
     print "✅ Install tools success test passed"
 }
@@ -63,6 +84,9 @@ def test_install_tools_no_goenv [] {
 def test_tools_binary_paths [] {
     print "Test: Verify binary paths after installation"
 
+    # Ensure go.mod exists
+    let had_gomod = (ensure_gomod)
+
     # Create test go env
     let test_goenv = ".go_test_bins"
 
@@ -85,7 +109,7 @@ def test_tools_binary_paths [] {
     let install_result = (^go install github.com/google/wire/cmd/wire@latest | complete)
 
     if $install_result.exit_code == 0 {
-        let bin_path = ([$test_goenv "bin" "wire"] | path join)
+        let bin_path = ([$test_goenv "bin" "wire"] | path join | path expand)
         assert ($bin_path | path exists)
         print "✅ Binary path test passed"
     } else {
@@ -94,6 +118,7 @@ def test_tools_binary_paths [] {
 
     # Cleanup
     rm -rf $test_goenv
+    cleanup_gomod $had_gomod
 }
 
 # Main test runner

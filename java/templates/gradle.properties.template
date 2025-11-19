@@ -1,0 +1,11 @@
+# Store Gradle caches locally inside the project directory
+org.gradle.caching=true
+org.gradle.caching.path={{GRADLE_CACHE_PATH}}
+
+# Force Gradle to use project-local user home
+gradle.user.home={{GRADLE_USER_HOME}}
+
+# Improve reproducibility and performance
+org.gradle.parallel=true
+org.gradle.daemon=true
+org.gradle.configuration-cache=true
