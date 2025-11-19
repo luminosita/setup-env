@@ -163,9 +163,10 @@ def main [
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
     let prereqs = (check_prerequisites)
+    print_prerequisites $prereqs
 
     if ($prereqs.errors | length) > 0 {
-        print "❌ Prerequisites check failed:\n"
+        print "\n❌ Prerequisites check failed:\n"
         for error in $prereqs.errors {
             print $"  - ($error)"
         }
@@ -173,7 +174,7 @@ def main [
         exit 1
     }
 
-    print "✅ All prerequisites validated\n"
+    print "\n✅ All prerequisites validated\n"
 
     # Phase 3: Virtual Environment Setup
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

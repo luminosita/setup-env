@@ -3,7 +3,7 @@
   "packages": [
     "python@3.11",
     "go@latest",
-    "jdk@latest",
+    "jdk25_headless@latest",
     "maven@latest",
     "gradle@latest",
     "nushell@latest",

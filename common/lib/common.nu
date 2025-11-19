@@ -98,30 +98,44 @@ export def parse_version [
     version_string: string
     prefix: string = ""
 ] {
-    # Remove prefix if provided
-    let clean_version = if ($prefix | str length) > 0 {
-        ($version_string | str replace $prefix "" | str trim)
+    # Remove prefix if provided, otherwise extract version from string
+    mut clean_version = ""
+
+    if ($prefix | str length) > 0 {
+        $clean_version = ($version_string | str replace $prefix "" | str trim)
     } else {
         # Extract version number using regex pattern
-        # Matches: X.Y or X.Y.Z where X, Y, Z are numbers
+        # Matches: X.Y.Z or X.Y or just X where X, Y, Z are numbers
+        # First try to match X.Y or X.Y.Z format
         let match_result = ($version_string | parse --regex '(\d+\.\d+(?:\.\d+)?)')
 
         if ($match_result | is-empty) {
-            error make {msg: $"No version pattern found in: ($version_string)"}
-        }
+            # If no match, try to match just major version (e.g., "25")
+            let major_only = ($version_string | parse --regex '(\d+)')
 
-        ($match_result | first | get capture0)
+            if ($major_only | is-empty) {
+                error make {msg: $"No version pattern found in: ($version_string)"}
+            }
+
+            $clean_version = ($major_only | first | get capture0)
+        } else {
+            $clean_version = ($match_result | first | get capture0)
+        }
     }
 
     # Split by dot
     let parts = ($clean_version | split row ".")
 
-    if ($parts | length) < 2 {
+    if ($parts | length) < 1 {
         error make {msg: $"Invalid version format: ($version_string)"}
     }
 
     let major = ($parts | get 0 | into int)
-    let minor = ($parts | get 1 | into int)
+    let minor = if ($parts | length) >= 2 {
+        ($parts | get 1 | into int)
+    } else {
+        0
+    }
     let patch = if ($parts | length) >= 3 {
         # Extract just the number before any suffix (e.g., "6rc1" -> "6")
         let patch_str = ($parts | get 2 | str replace -r '[^0-9].*' '')
@@ -177,10 +191,12 @@ export def validate_version [
             }
         } else {
             let req_version = $"($min_major).($min_minor)"
+            # Use string join to avoid >= being interpreted as shell operator in string interpolation
+            let error_msg = ([$binary_name, " ", $version.full, " does not meet requirement (>= ", $req_version, ")"] | str join)
             return {
                 valid: false,
                 version: $version,
-                error: $"($binary_name) ($version.full) does not meet requirement (>= ($req_version))"
+                error: $error_msg
             }
         }
     } catch {|e|

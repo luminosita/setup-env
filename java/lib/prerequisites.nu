@@ -8,37 +8,20 @@
 use ../../common/lib/common.nu *
 use ../../common/lib/prerequisites_base.nu *
 
-# Check all prerequisites for Java development
+# Check all prerequisites for Java development (silent - no printing)
 # Returns: record {java: bool, java_version: string, maven: bool, maven_version: string, gradle: bool, gradle_version: string, podman: bool, git: bool, task: bool, precommit: bool, errors: list}
 export def check_prerequisites [] {
-    print "🔍 Checking prerequisites...\n"
-
     # Check common prerequisites (Podman, Git, Task, pre-commit)
     let common = (check_common_prerequisites)
 
     # Check Java
     let java_result = (check_java)
-    if $java_result.ok {
-        print $"✅ Java installed: ($java_result.version)"
-    } else {
-        print $"❌ Java not found or invalid: ($java_result.error)"
-    }
 
     # Check Maven
     let maven_result = (check_maven)
-    if $maven_result.ok {
-        print $"✅ Maven installed: ($maven_result.version)"
-    } else {
-        print $"❌ Maven not found or invalid: ($maven_result.error)"
-    }
 
     # Check Gradle
     let gradle_result = (check_gradle)
-    if $gradle_result.ok {
-        print $"✅ Gradle installed: ($gradle_result.version)"
-    } else {
-        print $"❌ Gradle not found or invalid: ($gradle_result.error)"
-    }
 
     # Aggregate errors
     mut errors = []
@@ -69,7 +52,75 @@ export def check_prerequisites [] {
     }
 }
 
-# Check Java installation (>= 17)
+# Print prerequisites check results with formatted output
+# Args:
+#   prereqs: record - Result from check_prerequisites
+export def print_prerequisites [prereqs: record] {
+    print "🔍 Checking prerequisites...\n"
+
+    # Print common prerequisites
+    if $prereqs.podman {
+        print $"✅ Podman installed"
+    } else {
+        print "❌ Podman not found"
+    }
+
+    if $prereqs.git {
+        print $"✅ Git installed"
+    } else {
+        print "❌ Git not found"
+    }
+
+    if $prereqs.task {
+        print $"✅ Task installed"
+    } else {
+        print "❌ Task not found"
+    }
+
+    if $prereqs.precommit {
+        print $"✅ pre-commit installed"
+    } else {
+        print "❌ pre-commit not found"
+    }
+
+    # Print Java
+    if $prereqs.java {
+        print $"✅ Java installed: ($prereqs.java_version)"
+    } else {
+        let error = ($prereqs.errors | where {|e| $e =~ "Java"} | first?)
+        if ($error | is-not-empty) {
+            print $"❌ Java not found or invalid: ($error)"
+        } else {
+            print "❌ Java not found"
+        }
+    }
+
+    # Print Maven
+    if $prereqs.maven {
+        print $"✅ Maven installed: ($prereqs.maven_version)"
+    } else {
+        let error = ($prereqs.errors | where {|e| $e =~ "Maven"} | first?)
+        if ($error | is-not-empty) {
+            print $"❌ Maven not found or invalid: ($error)"
+        } else {
+            print "❌ Maven not found"
+        }
+    }
+
+    # Print Gradle
+    if $prereqs.gradle {
+        print $"✅ Gradle installed: ($prereqs.gradle_version)"
+    } else {
+        let error = ($prereqs.errors | where {|e| $e =~ "Gradle"} | first?)
+        if ($error | is-not-empty) {
+            print $"❌ Gradle not found or invalid: ($error)"
+        } else {
+            print "❌ Gradle not found"
+        }
+    }
+}
+
+# Check Java installation (>= 24)
 # Returns: record {ok: bool, version: string, error: string}
 def check_java [] {
     let java_check = (check_binary_exists "java")
@@ -85,7 +136,7 @@ def check_java [] {
         $version_result.stderr
     }
 
-    # Parse version from output like: openjdk version "17.0.2" or java version "17.0.2"
+    # Parse version from output like: openjdk version "24.0.2" or java version "24.0.2"
     let version_line = ($version_output | lines | first)
     let version_str = ($version_line | parse -r 'version "([^"]+)"' | get capture0.0? | default "")
 
@@ -93,8 +144,8 @@ def check_java [] {
         return {ok: false, version: "", error: "Could not parse Java version"}
     }
 
-    # Validate Java >= 17
-    let validation = (validate_version $version_str 17 0)
+    # Validate Java >= 24
+    let validation = (validate_version $version_str 24 0)
 
     if $validation.valid {
         return {
@@ -106,7 +157,7 @@ def check_java [] {
         return {
             ok: false,
             version: $version_str,
-            error: $"Java version ($version_str) does not meet minimum requirement: >= 17"
+            error: $"Java version ($version_str) does not meet minimum requirement: >= 24"
         }
     }
 }
