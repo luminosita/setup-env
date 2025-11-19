@@ -7,6 +7,7 @@
 # Usage:
 #   ./setup.nu              # Interactive mode
 #   ./setup.nu --silent     # Silent mode (CI/CD)
+#   ./setup.nu --library    # Library mode (skip container tools)
 #   ./setup.nu --validate   # Quick validation check only
 
 use ../common/lib/os_detection.nu *
@@ -68,9 +69,11 @@ def display_next_steps [] {
 
 # Quick validation - check if environment is ready
 # Returns: bool - true if environment is valid, false if setup needed
-def quick_validate [] {
+def quick_validate [
+    project_type: string = "microservice"
+] {
     # Check prerequisites
-    let prereqs = (check_prerequisites)
+    let prereqs = (check_prerequisites $project_type)
     if ($prereqs.errors | length) > 0 {
         return false
     }
@@ -92,11 +95,14 @@ def quick_validate [] {
 # Main setup orchestrator
 def main [
     --silent (-s)       # Run in silent mode (no prompts, use defaults)
+    --library (-l)      # Library mode (skip container tools: podman, podman-compose, hadolint, trivy)
 ] {
+    # Determine project type
+    let project_type = if $library { "library" } else { "microservice" }
+
     # Always check if environment is already valid
-    if (quick_validate) {
-        print "✅ Python development environment is already set up and valid"
-        print "   Nothing to do!\n"
+    if (quick_validate $project_type) {
+        print "✅ Python development environment is valid"
         exit 0
     }
 
@@ -155,10 +161,10 @@ def main [
 
     # Phase 2: Prerequisites Validation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 2: Prerequisites Validation"
+    print $"Phase 2: Prerequisites Validation - ($project_type) mode"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let prereqs = (check_prerequisites)
+    let prereqs = (check_prerequisites $project_type)
 
     if ($prereqs.errors | length) > 0 {
         print "❌ Prerequisites check failed:\n"

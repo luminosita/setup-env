@@ -42,7 +42,7 @@ def test_prerequisites_in_devbox [] {
     # If not, this test will help identify configuration issues
 
     if ($result.errors | is-not-empty) {
-        print $"⚠ Prerequisites check found issues (expected if not in devbox shell):"
+        print "⚠ Prerequisites check found issues - this is expected if not in devbox shell:"
         $result.errors | each { |err| print $"  - ($err)" }
     }
 

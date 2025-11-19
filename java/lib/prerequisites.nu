@@ -9,10 +9,14 @@ use ../../common/lib/common.nu *
 use ../../common/lib/prerequisites_base.nu *
 
 # Check all prerequisites for Java development (silent - no printing)
+# Args:
+#   project_type: string - "microservice" (default) or "library". Libraries skip container-related tools.
 # Returns: record {java: bool, java_version: string, maven: bool, maven_version: string, gradle: bool, gradle_version: string, podman: bool, git: bool, task: bool, precommit: bool, errors: list}
-export def check_prerequisites [] {
+export def check_prerequisites [
+    project_type: string = "microservice"
+] {
     # Check common prerequisites (Podman, Git, Task, pre-commit)
-    let common = (check_common_prerequisites)
+    let common = (check_common_prerequisites $project_type)
 
     # Check Java
     let java_result = (check_java)
@@ -38,6 +42,7 @@ export def check_prerequisites [] {
     $errors = ($errors | append $common.errors | flatten)
 
     return {
+        project_type: $project_type,
         java: $java_result.ok,
         java_version: $java_result.version,
         maven: $maven_result.ok,
@@ -162,7 +167,7 @@ def check_java [] {
     }
 }
 
-# Check Maven installation
+# Check Maven installation and version
 # Returns: record {ok: bool, version: string, error: string}
 def check_maven [] {
     let mvn_check = (check_binary_exists "mvn")
@@ -176,14 +181,25 @@ def check_maven [] {
         return {ok: false, version: "", error: "Could not determine Maven version"}
     }
 
-    return {
-        ok: true,
-        version: $version_result.version,
-        error: ""
+    # Validate version (require 3.9.11)
+    let validation = (validate_version $version_result.version 3 9 "Apache Maven " "Maven")
+
+    if $validation.valid {
+        return {
+            ok: true,
+            version: $version_result.version,
+            error: ""
+        }
+    } else {
+        return {
+            ok: false,
+            version: $version_result.version,
+            error: $"($validation.error). Required: >= 3.9.11"
+        }
     }
 }
 
-# Check Gradle installation
+# Check Gradle installation and version
 # Returns: record {ok: bool, version: string, error: string}
 def check_gradle [] {
     let gradle_check = (check_binary_exists "gradle")
@@ -197,9 +213,20 @@ def check_gradle [] {
         return {ok: false, version: "", error: "Could not determine Gradle version"}
     }
 
-    return {
-        ok: true,
-        version: $version_result.version,
-        error: ""
+    # Validate version (require 8.14.3)
+    let validation = (validate_version $version_result.version 8 14 "Gradle " "Gradle")
+
+    if $validation.valid {
+        return {
+            ok: true,
+            version: $version_result.version,
+            error: ""
+        }
+    } else {
+        return {
+            ok: false,
+            version: $version_result.version,
+            error: $"($validation.error). Required: >= 8.14.3"
+        }
     }
 }

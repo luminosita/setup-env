@@ -28,7 +28,7 @@ def cleanup_gomod [had_gomod: bool] {
 def test_validation_return_structure [] {
     print "Test: Validation return structure"
 
-    let result = (validate_environment ".go")
+    let result = (validate_environment ".go" "microservice")
 
     # Verify all required fields exist
     assert ("success" in ($result | columns))
@@ -50,7 +50,7 @@ def test_validation_return_structure [] {
 def test_validation_checks_structure [] {
     print "Test: Validation checks structure"
 
-    let result = (validate_environment ".go")
+    let result = (validate_environment ".go" "microservice")
 
     for check in $result.checks {
         # Each check should have name, passed, and message
@@ -73,10 +73,10 @@ def test_validation_checks_structure [] {
 def test_validation_check_count [] {
     print "Test: Validation check count"
 
-    let result = (validate_environment ".go")
+    let result = (validate_environment ".go" "microservice")
 
-    # Should have 5 checks: go.mod, go-workspace, .env, pre-commit, go-build
-    assert (($result.checks | length) == 5)
+    # Should have 6 checks: go.mod, go-workspace, .env, pre-commit, go-build, go-tools
+    assert (($result.checks | length) == 6)
 
     let check_names = ($result.checks | get name)
     assert ("go.mod" in $check_names)
@@ -84,6 +84,7 @@ def test_validation_check_count [] {
     assert (".env" in $check_names)
     assert ("pre-commit" in $check_names)
     assert ("go-build" in $check_names)
+    assert ("go-tools" in $check_names)
 
     print "✅ Check count valid"
 }
@@ -99,7 +100,7 @@ def test_validation_missing_goenv [] {
         rm -rf $test_goenv
     }
 
-    let result = (validate_environment $test_goenv)
+    let result = (validate_environment $test_goenv "microservice")
 
     # Should have at least one failure (go-workspace check)
     assert ($result.failed > 0)
@@ -116,8 +117,8 @@ def test_validation_missing_goenv [] {
 def test_validation_idempotent [] {
     print "Test: Validation is idempotent"
 
-    let result1 = (validate_environment ".go")
-    let result2 = (validate_environment ".go")
+    let result1 = (validate_environment ".go" "microservice")
+    let result2 = (validate_environment ".go" "microservice")
 
     # Results should be identical
     assert ($result1.success == $result2.success)
@@ -132,7 +133,7 @@ def test_validation_idempotent [] {
 def test_validation_messages [] {
     print "Test: Validation messages are informative"
 
-    let result = (validate_environment ".go")
+    let result = (validate_environment ".go" "microservice")
 
     for check in $result.checks {
         # Message should contain the check name or description

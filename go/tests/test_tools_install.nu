@@ -37,6 +37,7 @@ def test_install_tools_success [] {
 
     # Clean up if exists
     if ($test_goenv | path exists) {
+        chmod -R +w $test_goenv
         rm -rf $test_goenv
     }
 
@@ -53,6 +54,7 @@ def test_install_tools_success [] {
     assert ("failed" in ($result | columns))
 
     # Cleanup
+    chmod -R +w $test_goenv
     rm -rf $test_goenv
     cleanup_gomod $had_gomod
 
@@ -92,6 +94,7 @@ def test_tools_binary_paths [] {
 
     # Clean up if exists
     if ($test_goenv | path exists) {
+        chmod -R +w $test_goenv
         rm -rf $test_goenv
     }
 
@@ -117,6 +120,7 @@ def test_tools_binary_paths [] {
     }
 
     # Cleanup
+    chmod -R +w $test_goenv
     rm -rf $test_goenv
     cleanup_gomod $had_gomod
 }

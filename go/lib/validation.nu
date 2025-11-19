@@ -10,8 +10,12 @@ use ../../common/lib/common.nu *
 # Validate the complete development environment
 # Args:
 #   local_env_path: string - Path to local Go environment (default: .go)
+#   project_type: string - "microservice" (default) or "library"
 # Returns: record {success: bool, passed: int, failed: int, checks: list}
-export def validate_environment [local_env_path: string = ".go"] {
+export def validate_environment [
+    local_env_path: string = ".go"
+    project_type: string = "microservice"
+] {
     print "\n🔍 Validating environment...\n"
 
     mut checks = []
@@ -58,6 +62,15 @@ export def validate_environment [local_env_path: string = ".go"] {
     let build_check = (validate_go_build)
     $checks = ($checks | append $build_check)
     if $build_check.passed {
+        $passed = ($passed + 1)
+    } else {
+        $failed = ($failed + 1)
+    }
+
+    # Check 6: Go development tools
+    let tools_check = (validate_go_tools $local_env_path)
+    $checks = ($checks | append $tools_check)
+    if $tools_check.passed {
         $passed = ($passed + 1)
     } else {
         $failed = ($failed + 1)
@@ -161,5 +174,66 @@ def validate_go_build [] {
     } else {
         print $"  ❌ Go build failed"
         return {name: "go-build", passed: false, message: "Go build failed"}
+    }
+}
+
+# Validate Go development tools are installed
+# Args:
+#   local_env_path: string - Path to local Go environment
+def validate_go_tools [local_env_path: string] {
+    print "  Checking Go development tools..."
+
+    # Define expected tools
+    let expected_tools = [
+        "golangci-lint",
+        "gosec",
+        "govulncheck",
+        "staticcheck",
+        "wire",
+        "swag",
+        "mockgen",
+        "air",
+        "dlv"
+    ]
+
+    # Check if local env exists first
+    if not ($local_env_path | path exists) {
+        print $"  ❌ Cannot validate tools - ($local_env_path) workspace not found"
+        return {name: "go-tools", passed: false, message: $"($local_env_path) workspace not found"}
+    }
+
+    let bin_path = ($local_env_path | path join "bin")
+
+    if not ($bin_path | path exists) {
+        print $"  ❌ No tools installed - bin directory not found"
+        return {name: "go-tools", passed: false, message: "No tools installed"}
+    }
+
+    # Count installed tools
+    mut installed = []
+    mut missing = []
+
+    for tool in $expected_tools {
+        let tool_path = ($bin_path | path join $tool)
+        if ($tool_path | path exists) {
+            $installed = ($installed | append $tool)
+        } else {
+            $missing = ($missing | append $tool)
+        }
+    }
+
+    let installed_count = ($installed | length)
+    let total_count = ($expected_tools | length)
+
+    if $installed_count == $total_count {
+        print $"  ✅ All development tools installed - ($installed_count)/($total_count)"
+        return {name: "go-tools", passed: true, message: $"All ($total_count) development tools installed"}
+    } else if $installed_count > 0 {
+        print $"  ⚠️  Partial tools installation - ($installed_count)/($total_count)"
+        print $"     Missing: ($missing | str join ', ')"
+        return {name: "go-tools", passed: false, message: $"Only ($installed_count)/($total_count) tools installed. Missing: ($missing | str join ', ')"}
+    } else {
+        print $"  ❌ No development tools installed"
+        return {name: "go-tools", passed: false, message: "No development tools installed"}
     }
 }

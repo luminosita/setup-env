@@ -21,10 +21,14 @@ use ../../common/lib/common.nu *
 use ../../common/lib/prerequisites_base.nu *
 
 # Check if all prerequisites are available and meet version requirements
+# Args:
+#   project_type: string - "microservice" (default) or "library". Libraries skip container-related tools.
 # Returns structured record with validation results and errors
 #
 # Returns: record<go: bool, go_version: string, podman: bool, podman_version: string, git: bool, git_version: string, errors: list<string>>
-export def check_prerequisites [] {
+export def check_prerequisites [
+    project_type: string = "microservice"
+] {
     mut errors = []
 
     # Check Go 1.21+
@@ -37,10 +41,11 @@ export def check_prerequisites [] {
     }
 
     # Check common prerequisites (Podman, Git, Task, pre-commit)
-    let common = (check_common_prerequisites)
+    let common = (check_common_prerequisites $project_type)
     $errors = ($errors | append $common.errors)
 
     return {
+        project_type: $project_type,
         go: $go_ok,
         go_version: $go_version,
         podman: $common.podman,

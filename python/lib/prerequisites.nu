@@ -21,10 +21,14 @@ use ../../common/lib/common.nu *
 use ../../common/lib/prerequisites_base.nu *
 
 # Check if all prerequisites are available and meet version requirements
+# Args:
+#   project_type: string - "microservice" (default) or "library". Libraries skip container-related tools.
 # Returns structured record with validation results and errors
 #
 # Returns: record<python: bool, python_version: string, podman: bool, podman_version: string, git: bool, git_version: string, errors: list<string>>
-export def check_prerequisites [] {
+export def check_prerequisites [
+    project_type: string = "microservice"
+] {
     mut errors = []
 
     # Check Python 3.11+
@@ -46,10 +50,11 @@ export def check_prerequisites [] {
     }
 
     # Check common prerequisites (Podman, Git, Task, pre-commit)
-    let common = (check_common_prerequisites)
+    let common = (check_common_prerequisites $project_type)
     $errors = ($errors | append $common.errors)
 
     return {
+        project_type: $project_type,
         python: $python_ok,
         python_version: $python_version,
         podman: $common.podman,
@@ -104,6 +109,10 @@ def check_python [] {
 
 
 
+# Check UV package manager availability and version
+# Helper function (not exported - private to module)
+#
+# Returns: record<ok: bool, version: string, error: string>
 def check_uv [] {
     # Check if uv binary exists
     let binary_check = (check_binary_exists "uv")
@@ -120,11 +129,22 @@ def check_uv [] {
     let version_result = (get_binary_version "uv" "--version")
 
     if $version_result.success {
-        print $"✅ UV installed: ($version_result.version)"
-        return {
-            ok: true,
-            version: $version_result.version,
-            error: ""
+        # Validate version (require 0.8.23)
+        let validation = (validate_version $version_result.version 0 8 "uv " "UV")
+
+        if $validation.valid {
+            print $"✅ UV installed: ($version_result.version)"
+            return {
+                ok: true,
+                version: $version_result.version,
+                error: ""
+            }
+        } else {
+            return {
+                ok: false,
+                version: $version_result.version,
+                error: $"($validation.error). Required: >= 0.8.23"
+            }
         }
     } else {
         return {
