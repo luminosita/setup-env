@@ -166,7 +166,7 @@ def validate_precommit_hooks [] {
 def validate_go_build [] {
     print "  Checking Go build..."
 
-    let build_result = (^go build -v ./... | complete)
+    let build_result = (with-env {CGO_ENABLED: "0"} { ^go build -v ./... } | complete)
 
     if $build_result.exit_code == 0 {
         print "  ✅ Go build successful"
