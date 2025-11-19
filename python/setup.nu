@@ -67,36 +67,37 @@ def display_next_steps [] {
 }
 
 # Quick validation - check if environment is ready
+# Returns: bool - true if environment is valid, false if setup needed
 def quick_validate [] {
     # Check prerequisites
     let prereqs = (check_prerequisites)
     if ($prereqs.errors | length) > 0 {
-        exit 1
+        return false
     }
 
     # Check if venv exists
     if not (".venv" | path exists) {
-        exit 1
+        return false
     }
 
     # Run validation
     let validation = (validate_environment ".venv")
     if $validation.failed > 0 {
-        exit 1
+        return false
     }
 
-    exit 0
+    return true
 }
 
 # Main setup orchestrator
 def main [
     --silent (-s)       # Run in silent mode (no prompts, use defaults)
-    --validate (-v)     # Quick validation check only
 ] {
-    # Handle validation mode
-    if $validate {
-        quick_validate
-        return
+    # Always check if environment is already valid
+    if (quick_validate) {
+        print "✅ Python development environment is already set up and valid"
+        print "   Nothing to do!\n"
+        exit 0
     }
 
     let start_time = (date now)
