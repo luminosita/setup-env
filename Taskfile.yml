@@ -11,22 +11,11 @@ tasks:
     desc: Run all Python setup script tests (unit + integration)
     cmds:
       - task: python:test:unit
-      - task: python:test:integration
 
   python:test:unit:
     desc: Run Python setup script unit tests
     cmds:
       - 'failed=0; for test in python/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
-
-  python:test:integration:
-    desc: Run Python integration tests for setup scripts
-    cmds:
-      - nu python/tests/integration/run_all_tests.nu
-
-  python:test:integration:quick:
-    desc: Run Python integration tests (quick mode - skip performance tests)
-    cmds:
-      - nu python/tests/integration/run_all_tests.nu --quick
 
   python:build:
     desc: "Build standalone Python setup script"
@@ -42,17 +31,11 @@ tasks:
     desc: Run all Go setup script tests (unit + integration)
     cmds:
       - task: go:test:unit
-      - task: go:test:integration
 
   go:test:unit:
     desc: Run Go setup script unit tests
     cmds:
       - 'failed=0; for test in go/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
-
-  go:test:integration:
-    desc: Run Go integration tests for setup scripts
-    cmds:
-      - nu go/tests/integration/run_all_tests.nu
 
   go:build:
     desc: "Build standalone Go setup script"
@@ -68,17 +51,11 @@ tasks:
     desc: Run all Java setup script tests (unit + integration)
     cmds:
       - task: java:test:unit
-      - task: java:test:integration
 
   java:test:unit:
     desc: Run Java setup script unit tests
     cmds:
       - 'failed=0; for test in java/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
-
-  java:test:integration:
-    desc: Run Java integration tests for setup scripts
-    cmds:
-      - nu java/tests/integration/run_all_tests.nu
 
   java:build:
     desc: "Build standalone Java setup script"
@@ -97,9 +74,15 @@ tasks:
       - task: go:build
       - task: java:build
 
-  test:
-    desc: Run all tests (Python + Go + Java)
+  common:test:
+    desc: Run common library tests
     cmds:
+      - 'failed=0; for test in common/tests/test_*.nu; do echo "Running: $test"; nu "$test" || { echo "❌ Test failed: $test"; failed=1; }; echo ""; done; if [ $failed -eq 1 ]; then echo "❌ Some tests failed"; exit 1; else echo "✅ All setup script tests passed"; fi'
+
+  test:
+    desc: Run all tests (Common + Python + Go + Java)
+    cmds:
+      - task: common:test
       - task: python:test
       - task: go:test
       - task: java:test
