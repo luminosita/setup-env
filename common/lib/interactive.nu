@@ -216,13 +216,15 @@ export def get_setup_preferences [silent: bool = false] {
     print "\n⚙️  Setup Preferences\n"
 
     # Prompt for IDE preference
-    let ide_options = ["None (skip IDE setup)", "VS Code"]
+    let ide_options = ["None (skip IDE setup)", "VS Code", "Skip Setup (exit)"]
     let ide_choice = (prompt_choice "Which IDE would you like to configure?" $ide_options 0)
 
     let ide = if ($ide_choice == "VS Code") {
         "vscode"
-    } else {
+    } else if ($ide_choice == "None (skip IDE setup)") {
         "none"
+    } else {
+        "exit"
     }
 
     # Prompt for verbose mode

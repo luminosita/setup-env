@@ -148,6 +148,10 @@ def main [
     # Get setup preferences (interactive or silent)
     let preferences = (get_setup_preferences $silent)
 
+    if ($preferences == "exit") {
+        exit 0
+    }
+
     if not $silent {
         display_setup_summary $preferences
     }
