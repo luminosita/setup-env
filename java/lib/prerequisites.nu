@@ -112,28 +112,32 @@ def check_maven [] {
         return {ok: false, version: "", error: "Maven (mvn) not found in PATH"}
     }
 
-    let version_result = (get_binary_version "mvn" "--version")
+    # Get version - Maven outputs version info on first line: "Apache Maven X.Y.Z (...)"
+    let result = (^mvn --version | complete)
 
-    if ($version_result.version | is-empty) {
+    if $result.exit_code != 0 {
         print "❌ Could not determine Maven version"
         return {ok: false, version: "", error: "Could not determine Maven version"}
     }
 
+    # Extract first line containing version
+    let version_line = ($result.stdout | lines | first)
+
     # Validate version (require 3.9.11)
-    let validation = (validate_version $version_result.version 3 9 "Apache Maven " "Maven")
+    let validation = (validate_version $version_line 3 9 "Apache Maven " "Maven")
 
     if $validation.valid {
-        print $"✅ Maven installed: ($version_result.version)"
+        print $"✅ Maven installed: ($validation.version.full)"
         return {
             ok: true,
-            version: $version_result.version,
+            version: $validation.version.full,
             error: ""
         }
     } else {
         print $"❌ Maven: ($validation.error). Required: >= 3.9.11"
         return {
             ok: false,
-            version: $version_result.version,
+            version: $validation.version.full,
             error: $"($validation.error). Required: >= 3.9.11"
         }
     }
@@ -148,28 +152,35 @@ def check_gradle [] {
         return {ok: false, version: "", error: "Gradle not found in PATH"}
     }
 
-    let version_result = (get_binary_version "gradle" "--version")
+    # Get version - Gradle outputs version in the format:
+    # ------------------------------------------------------------
+    # Gradle X.Y.Z
+    # ------------------------------------------------------------
+    let result = (^gradle --version | complete)
 
-    if ($version_result.version | is-empty) {
+    if $result.exit_code != 0 {
         print "❌ Could not determine Gradle version"
         return {ok: false, version: "", error: "Could not determine Gradle version"}
     }
 
+    # Extract the line containing "Gradle " (use where instead of find to avoid ANSI color codes)
+    let version_line = ($result.stdout | lines | where ($it | str contains "Gradle ") | first)
+
     # Validate version (require 8.14.3)
-    let validation = (validate_version $version_result.version 8 14 "Gradle " "Gradle")
+    let validation = (validate_version $version_line 8 14 "Gradle " "Gradle")
 
     if $validation.valid {
-        print $"✅ Gradle installed: ($version_result.version)"
+        print $"✅ Gradle installed: ($validation.version.full)"
         return {
             ok: true,
-            version: $version_result.version,
+            version: $validation.version.full,
             error: ""
         }
     } else {
         print $"❌ Gradle: ($validation.error). Required: >= 8.14.3"
         return {
             ok: false,
-            version: $version_result.version,
+            version: $validation.version.full,
             error: $"($validation.error). Required: >= 8.14.3"
         }
     }
