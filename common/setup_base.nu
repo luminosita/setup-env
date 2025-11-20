@@ -24,15 +24,41 @@
 #     placeholder_check: 'get project.name? | default "" | str contains "change-me"'
 # }
 
-use lib/os_detection.nu *
-use lib/prerequisites.nu *
-use lib/venv_setup.nu *
-use lib/deps_install.nu *
-use lib/config_setup.nu *
-use lib/validation.nu *
-use lib/interactive.nu *
-use lib/template_config.nu *
-use lib/common.nu *
+# Note: This module is imported by language-specific setup scripts
+# Do not add use statements here - they are added by the importing script
+
+# Quick validation - check if environment is ready
+# Returns: bool - true if environment is valid, false if setup needed
+# Args:
+#   config: record - Configuration with env_path
+#   project_type: string - Project type (microservice or library)
+#   check_prereqs_fn: closure - Function to check prerequisites
+#   validate_env_fn: closure - Function to validate environment
+export def quick_validate [
+    config: record
+    project_type: string
+    check_prereqs_fn: closure
+    validate_env_fn: closure
+] {
+    # Check prerequisites
+    let prereqs = (do $check_prereqs_fn $project_type)
+    if ($prereqs.errors | length) > 0 {
+        return false
+    }
+
+    # Check if local env exists
+    if not ($config.env_path | path exists) {
+        return false
+    }
+
+    # Run validation
+    let validation = (do $validate_env_fn $config.env_path $project_type)
+    if $validation.failed > 0 {
+        return false
+    }
+
+    return true
+}
 
 # Display welcome banner
 export def display_welcome [silent: bool, lang_name: string] {
@@ -103,8 +129,20 @@ export def display_next_steps [has_venv: bool] {
 # Main setup orchestrator
 export def run_setup [
     config: record
-    --silent (-s)  # Run in silent mode (no prompts, use defaults)
+    --silent (-s)                # Run in silent mode (no prompts, use defaults)
+    --project-type: string = "microservice"  # Project type (microservice or library)
+    --check-prereqs-fn: closure  # Closure to check prerequisites
+    --create-venv-fn: closure    # Closure to create virtual environment
+    --install-deps-fn: closure   # Closure to install dependencies
+    --install-tools-fn: any = null  # Optional: closure to install language-specific tools (or null)
+    --validate-env-fn: closure   # Closure to validate environment
 ] {
+    # Run quick validation
+    if (quick_validate $config $project_type $check_prereqs_fn $validate_env_fn) {
+        print $"✅ ($config.lang_name) development environment is valid"
+        exit 0
+    }
+
     let start_time = (date now)
 
     # Display welcome
@@ -160,10 +198,10 @@ export def run_setup [
 
     # Phase 2: Prerequisites Validation
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 2: Prerequisites Validation"
+    print $"Phase 2: Prerequisites Validation - ($project_type) mode"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let prereqs = (check_prerequisites)
+    let prereqs = (do $check_prereqs_fn $project_type)
 
     if ($prereqs.errors | length) > 0 {
         print "❌ Prerequisites check failed:\n"
@@ -181,7 +219,7 @@ export def run_setup [
     print "Phase 3: Virtual Environment Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let venv_result = (create_venv $config.env_path $config.version)
+    let venv_result = (do $create_venv_fn $config.env_path $config.version)
 
     if not $venv_result.success {
         print $"❌ Virtual environment creation failed: ($venv_result.error)"
@@ -195,7 +233,7 @@ export def run_setup [
     print "Phase 4: Dependency Installation"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let deps_result = (install_dependencies $config.env_path)
+    let deps_result = (do $install_deps_fn $config.env_path)
 
     if not $deps_result.success {
         print $"❌ Dependency installation failed: ($deps_result.error)"
@@ -204,9 +242,31 @@ export def run_setup [
 
     print $"✅ Dependencies installed: ($deps_result.packages) packages\n"
 
-    # Phase 5: Configuration Setup
+    # Phase 5 (Optional): Development Tools Installation
+    let next_phase = if ($install_tools_fn != null) {
+        print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        print "Phase 5: Development Tools Installation"
+        print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+
+        let tools_result = (do $install_tools_fn $config.env_path)
+
+        if not $tools_result.success {
+            for failed in $tools_result.failed {
+                $errors = ($errors | append $"Tool ($failed.tool) failed to install")
+            }
+            print $"⚠️  Tools installation completed with ($tools_result.failed | length) failures\n"
+        } else {
+            print $"✅ All development tools installed: ($tools_result.installed) tools\n"
+        }
+
+        6  # Next phase number
+    } else {
+        5  # Next phase number if no tools
+    }
+
+    # Phase 5/6: Configuration Setup
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 5: Configuration Setup"
+    print $"Phase ($next_phase): Configuration Setup"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
     let config_result = (setup_configuration $config.env_path)
@@ -220,12 +280,13 @@ export def run_setup [
         print "✅ Configuration complete\n"
     }
 
-    # Phase 6: Environment Validation
+    # Phase 6/7: Environment Validation
+    let validation_phase = ($next_phase + 1)
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print "Phase 6: Environment Validation"
+    print $"Phase ($validation_phase): Environment Validation - ($project_type) mode"
     print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
-    let validation = (validate_environment $config.env_path)
+    let validation = (do $validate_env_fn $config.env_path $project_type)
 
     if $validation.failed > 0 {
         $errors = ($errors | append $"($validation.failed) validation checks failed")

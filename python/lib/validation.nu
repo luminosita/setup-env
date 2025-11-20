@@ -15,8 +15,12 @@ use ../../common/lib/common.nu
 # Validate the complete development environment
 # Args:
 #   venv_path: string - Path to virtual environment (default: .venv)
+#   project_type: string - Project type (microservice or library) - optional, unused but kept for compatibility
 # Returns: record {passed: int, failed: int, checks: list}
-export def validate_environment [venv_path: string = ".venv"] {
+export def validate_environment [
+    venv_path: string = ".venv"
+    project_type: string = "microservice"  # Unused, but kept for API compatibility
+] {
     print "\n🔍 Running environment validation checks...\n"
 
     mut checks = []

@@ -10,8 +10,12 @@ use ../../common/lib/common.nu *
 # Validate the complete development environment
 # Args:
 #   local_env_path: string - Path to local Java environment (default: .java)
+#   project_type: string - Project type (microservice or library) - optional, unused but kept for compatibility
 # Returns: record {success: bool, passed: int, failed: int, checks: list}
-export def validate_environment [local_env_path: string = ".java"] {
+export def validate_environment [
+    local_env_path: string = ".java"
+    project_type: string = "microservice"  # Unused, but kept for API compatibility
+] {
     print "\n🔍 Validating environment...\n"
 
     mut checks = []

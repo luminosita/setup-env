@@ -102,6 +102,7 @@ export def install_tools [local_env_path: string] {
     $env.GOBIN = ($local_full_path | path join "bin")
     $env.GOMODCACHE = ($local_full_path | path join "pkg" "mod")
     $env.GOCACHE = ($local_full_path | path join "cache")
+    $env.CGO_ENABLED = "0"
 
     # Create bin directory if it doesn't exist
     let bin_path = ($local_full_path | path join "bin")

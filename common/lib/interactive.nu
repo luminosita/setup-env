@@ -227,6 +227,12 @@ export def get_setup_preferences [silent: bool = false] {
         "exit"
     }
 
+    # If user chose exit, display message and exit
+    if ($ide == "exit") {
+        print "\n👋 Setup cancelled. Exiting...\n"
+        exit 0
+    }
+
     # Prompt for verbose mode
     let verbose = (prompt_yes_no "Enable verbose output?" false)
 
