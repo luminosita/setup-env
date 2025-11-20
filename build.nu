@@ -159,15 +159,18 @@ def transform_config_files_for_standalone [content: string] {
     let result = (
         $content
         | lines
-        | reduce -f {lines: [], skip: false, next_template: null} { |line, acc|
-            if $line =~ '# Get the templates directory path' {
+        | reduce -f {lines: [], skip: false, next_template: null, added_import: false} { |line, acc|
+            # Add 'use templates *' after the first 'use' statement
+            if (not $acc.added_import) and ($line =~ '^use ') {
+                {lines: ($acc.lines | append $line | append "use templates *"), skip: $acc.skip, next_template: $acc.next_template, added_import: true}
+            } else if $line =~ '# Get the templates directory path' {
                 # Skip the get_templates_dir function entirely
-                {lines: $acc.lines, skip: true, next_template: $acc.next_template}
+                {lines: $acc.lines, skip: true, next_template: $acc.next_template, added_import: $acc.added_import}
             } else if $acc.skip {
                 if $line =~ '^}$' {
-                    {lines: $acc.lines, skip: false, next_template: $acc.next_template}
+                    {lines: $acc.lines, skip: false, next_template: $acc.next_template, added_import: $acc.added_import}
                 } else {
-                    {lines: $acc.lines, skip: true, next_template: $acc.next_template}
+                    {lines: $acc.lines, skip: true, next_template: $acc.next_template, added_import: $acc.added_import}
                 }
             } else if $line =~ 'let template_path = \(get_templates_dir \| path join "(.+\.template)"\)' {
                 # Extract template filename and convert to constant name
@@ -177,17 +180,17 @@ def transform_config_files_for_standalone [content: string] {
                     let template_file = ($matches | first | get filename)
                     let const_name = (template_filename_to_constant $template_file)
                     # Store for next line and skip this line
-                    {lines: $acc.lines, skip: $acc.skip, next_template: $const_name}
+                    {lines: $acc.lines, skip: $acc.skip, next_template: $const_name, added_import: $acc.added_import}
                 } else {
-                    {lines: ($acc.lines | append $line), skip: $acc.skip, next_template: $acc.next_template}
+                    {lines: ($acc.lines | append $line), skip: $acc.skip, next_template: $acc.next_template, added_import: $acc.added_import}
                 }
             } else if $line =~ 'let template = \(open \$template_path --raw\)' and ($acc.next_template != null) {
                 # Replace with embedded template constant
                 let indent = ($line | str replace -r '^(\s*).*' '$1')
-                let new_line = $"($indent)let template = templates ($acc.next_template)"
-                {lines: ($acc.lines | append $new_line), skip: $acc.skip, next_template: null}
+                let new_line = $"($indent)let template = \$($acc.next_template)"
+                {lines: ($acc.lines | append $new_line), skip: $acc.skip, next_template: null, added_import: $acc.added_import}
             } else {
-                {lines: ($acc.lines | append $line), skip: $acc.skip, next_template: $acc.next_template}
+                {lines: ($acc.lines | append $line), skip: $acc.skip, next_template: $acc.next_template, added_import: $acc.added_import}
             }
         }
     )

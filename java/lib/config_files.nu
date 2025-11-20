@@ -55,13 +55,13 @@ export def generate_config_files [local_env_path: string = ".java"] {
         }
     }
 
-    # Generate .m2/settings.xml
-    let m2_dir = ".m2"
+    # Generate .java/m2/settings.xml
+    let m2_dir = ($local_env_path | path join "m2")
     let settings_xml = ($m2_dir | path join "settings.xml")
 
     let maven_result = if not ($settings_xml | path exists) {
         try {
-            # Create .m2 directory if it doesn't exist
+            # Create m2 directory if it doesn't exist
             if not ($m2_dir | path exists) {
                 mkdir $m2_dir
             }
@@ -80,8 +80,8 @@ export def generate_config_files [local_env_path: string = ".java"] {
         {created: "", error: ""}
     }
 
-    # Generate gradle/gradle.properties
-    let gradle_dir = "gradle"
+    # Generate .java/gradle/gradle.properties
+    let gradle_dir = ($local_env_path | path join "gradle")
     let gradle_properties = ($gradle_dir | path join "gradle.properties")
 
     let gradle_result = if not ($gradle_properties | path exists) {

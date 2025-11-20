@@ -35,7 +35,7 @@ def main [
         env_path: ".java",
         version: "",
         placeholder_file: "pom.xml",  # Primary file, but check is more complex
-        placeholder_check: {|| (("pom.xml" | path exists) and (open pom.xml | str contains "change-me")) or (("build.gradle" | path exists) and (open build.gradle | str contains "change-me")) or (("build.gradle.kts" | path exists) and (open build.gradle.kts | str contains "change-me")) },
+        placeholder_check: {|| (("pom.xml" | path exists) and (open pom.xml --raw | str contains "change-me")) or (("build.gradle" | path exists) and (open build.gradle --raw | str contains "change-me")) or (("build.gradle.kts" | path exists) and (open build.gradle.kts --raw | str contains "change-me")) },
         has_venv: false
     }
 

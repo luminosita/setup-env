@@ -31,7 +31,8 @@ export def create_venv [local_env_path: string = ".java", version: string = ""] 
                 print $"  - ($error)"
             }
         } else if ($config_result.created | length) > 0 {
-            print $"\n✅ Created ($config_result.created | length) configuration file(s)"
+            let count = ($config_result.created | length)
+            print $"\n✅ Created ($count) configuration files"
         }
 
         let java_version = (get_java_version)
@@ -84,7 +85,8 @@ export def create_venv [local_env_path: string = ".java", version: string = ""] 
             print $"  - ($error)"
         }
     } else if ($config_result.created | length) > 0 {
-        print $"\n✅ Created ($config_result.created | length) configuration file(s)"
+        let count = ($config_result.created | length)
+        print $"\n✅ Created ($count) configuration files"
     }
 
     let java_version = (get_java_version)
