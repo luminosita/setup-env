@@ -187,6 +187,7 @@ def validate_go_tools [local_env_path: string] {
     let expected_tools = [
         "golangci-lint",
         "gosec",
+        "goimports",
         "govulncheck",
         "staticcheck",
         "wire",

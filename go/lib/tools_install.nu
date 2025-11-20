@@ -126,6 +126,11 @@ export def install_tools [local_env_path: string] {
             binary_install: "curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b {bin_dir} latest"
         },
         {
+            name: "goimports",
+            package: "golang.org/x/tools/cmd/goimports@latest",
+            binary_name: "goimports"
+        },
+        {
             name: "govulncheck",
             package: "golang.org/x/vuln/cmd/govulncheck@latest",
             binary_name: "govulncheck"
