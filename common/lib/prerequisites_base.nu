@@ -249,34 +249,38 @@ export def check_sonarscanner [] {
         }
     }
 
-    # Get version
-    let version_result = (get_binary_version "sonar-scanner" "--version")
+    # Get version - sonar-scanner outputs version on stderr, with the version on the "SonarScanner CLI" line
+    let result = (^sonar-scanner --version | complete)
 
-    if $version_result.success {
+    if $result.exit_code == 0 {
+        # Extract version from the line containing "SonarScanner CLI"
+        let version_line = ($result.stdout | lines | find "SonarScanner CLI" | first)
+        let version_str = ($version_line | str replace --regex '.*SonarScanner CLI\s+' '' | str trim)
+
         # Validate version (require 7.2)
-        let validation = (validate_version $version_result.version 7 2 "" "Sonar Scanner")
+        let validation = (validate_version $version_str 7 2 "" "Sonar Scanner")
 
         if $validation.valid {
-            print $"✅ Sonar Scanner installed: ($version_result.version)"
+            print $"✅ Sonar Scanner installed: ($version_str)"
             return {
                 ok: true,
-                version: $version_result.version,
+                version: $version_str,
                 error: ""
             }
         } else {
             print $"❌ Sonar Scanner: ($validation.error). Required: >= 7.2"
             return {
                 ok: false,
-                version: $version_result.version,
+                version: $version_str,
                 error: $"($validation.error). Required: >= 7.2"
             }
         }
     } else {
-        print $"❌ Sonar Scanner found but version check failed: ($version_result.error)"
+        print $"❌ Sonar Scanner found but version check failed: ($result.stderr)"
         return {
             ok: false,
             version: "",
-            error: $"Sonar Scanner found but version check failed: ($version_result.error)"
+            error: $"Sonar Scanner found but version check failed: ($result.stderr)"
         }
     }
 }

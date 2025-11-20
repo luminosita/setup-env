@@ -24,9 +24,6 @@
 #     placeholder_check: 'get project.name? | default "" | str contains "change-me"'
 # }
 
-# Note: This module is imported by language-specific setup scripts
-# Do not add use statements here - they are added by the importing script
-
 # Quick validation - check if environment is ready
 # Returns: bool - true if environment is valid, false if setup needed
 # Args:
@@ -154,7 +151,7 @@ export def run_setup [
     # Phase 0: Application Configuration (only if placeholders exist)
     let has_placeholders = (
         ($config.placeholder_file | path exists) and
-        (do { open $config.placeholder_file | ($config.placeholder_check) } | complete | get stdout | str trim | into bool)
+        (do $config.placeholder_check)
     )
 
     let app_config = if $has_placeholders {

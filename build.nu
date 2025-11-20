@@ -71,12 +71,18 @@ def discover_required_modules [main_script: string, lib_dir: string, common_lib_
 
         # Check if module is in common/lib first
         let common_module_path = ($common_lib_dir | path join $"($current).nu")
+        let common_base_path = ($"common/($current).nu")
         let lib_module_path = ($lib_dir | path join $"($current).nu")
 
         if ($common_module_path | path exists) {
             # Module is in common/lib
             $common_required = ($common_required | append $current)
             let deps = (parse_use_statements $common_module_path)
+            $to_process = ($to_process | append $deps | uniq)
+        } else if ($common_base_path | path exists) {
+            # Module is in common/ (e.g., setup_base.nu)
+            $common_required = ($common_required | append $current)
+            let deps = (parse_use_statements $common_base_path)
             $to_process = ($to_process | append $deps | uniq)
         } else if ($lib_module_path | path exists) {
             # Module is in base_dir/lib
@@ -119,6 +125,7 @@ def create_templates_module [templates: list] {
 def transform_use_statements [content: string] {
     $content
         | lines
+        | where not ($it | str starts-with "#!")
         | each { |line|
             if ($line | str starts-with "use ") {
                 # Convert "use lib/common.nu *" to "use common *"
@@ -238,7 +245,14 @@ def main [
         print $"  • ($module) \(($size) bytes\) [base]"
     }
     for module in $common_modules {
-        let path = ($common_lib_dir | path join $"($module).nu")
+        # Check both common/lib and common/ for the module
+        let lib_path = ($common_lib_dir | path join $"($module).nu")
+        let base_path = ($"common/($module).nu")
+        let path = if ($lib_path | path exists) {
+            $lib_path
+        } else {
+            $base_path
+        }
         let size = (ls $path | get size | first)
         print $"  • ($module) \(($size) bytes\) [common]"
     }
@@ -289,9 +303,26 @@ def main [
         ""
     }
 
-    # Build common module definitions first
-    let common_module_defs = $common_modules | each { |name|
-        let path = ($common_lib_dir | path join $"($name).nu")
+    # Separate setup_base from other common modules
+    let setup_base_content = if "setup_base" in $common_modules {
+        let base_path = "common/setup_base.nu"
+        print $"  Processing setup_base as top-level code"
+        let raw_content = open $base_path
+        transform_use_statements $raw_content
+    } else {
+        ""
+    }
+
+    # Build common module definitions first (excluding setup_base)
+    let common_module_defs = $common_modules | where $it != "setup_base" | each { |name|
+        # Check both common/lib and common/ for the module
+        let lib_path = ($common_lib_dir | path join $"($name).nu")
+        let base_path = ($"common/($name).nu")
+        let path = if ($lib_path | path exists) {
+            $lib_path
+        } else {
+            $base_path
+        }
         print $"  Processing common module: ($name)"
 
         let raw_content = open $path
@@ -315,14 +346,14 @@ def main [
         $"module ($name) {\n($content)\n}\n"
     } | str join "\n"
 
-    # Combine all modules (templates first if exists, then common, then base)
+    # Combine all modules (templates first if exists, then common without setup_base, then base)
     let all_modules = if ($templates | length) > 0 {
-        ["templates"] | append $common_modules | append $required_modules
+        ["templates"] | append ($common_modules | where $it != "setup_base") | append $required_modules
     } else {
-        $common_modules | append $required_modules
+        ($common_modules | where $it != "setup_base") | append $required_modules
     }
 
-    # Generate use statements for all modules
+    # Generate use statements for all modules (excluding setup_base which is inlined)
     let use_statements = $all_modules
         | each { |name| $"use ($name) *" }
         | str join "\n"
@@ -332,13 +363,14 @@ def main [
     let main = open $main_script
         | lines
         | where not ($it | str starts-with "use ")
+        | where not ($it | str starts-with "#!")
         | str join "\n"
 
-    # Combine all parts (templates module first if exists, then common modules, then base modules)
+    # Combine all parts (templates module first if exists, then common modules, then base modules, then use statements, then setup_base content, then main)
     let standalone = if ($templates | length) > 0 {
-        $"#!/usr/bin/env nu\n\n($templates_module)\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($main)"
+        $"#!/usr/bin/env nu\n\n($templates_module)\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($setup_base_content)\n\n($main)"
     } else {
-        $"#!/usr/bin/env nu\n\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($main)"
+        $"#!/usr/bin/env nu\n\n($common_module_defs)\n($base_module_defs)\n($use_statements)\n\n($setup_base_content)\n\n($main)"
     }
 
     # Ensure output directory exists
