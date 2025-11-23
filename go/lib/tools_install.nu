@@ -132,6 +132,11 @@ export def install_tools [local_env_path: string] {
             binary_name: "goimports"
         },
         {
+            name: "gopls",
+            package: "golang.org/x/tools/gopls@latest",
+            binary_name: "gopls"
+        },
+        {
             name: "govulncheck",
             package: "golang.org/x/vuln/cmd/govulncheck@latest",
             binary_name: "govulncheck"
